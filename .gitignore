@@ -1,0 +1,91 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+*.manifest
+*.spec
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+*.env
+*.venv
+
+# =========================
+# Django
+# =========================
+# SQLite database (local only, not for production)
+db.sqlite3
+db.sqlite3-journal
+
+# Django migrations (only keep empty __init__.py)
+**/migrations/*
+!**/migrations/__init__.py
+
+# Static and Media files (collected or uploaded)
+staticfiles/
+media/
+assets/
+build/
+
+# =========================
+# OS / System Files
+# =========================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+desktop.ini
+
+# =========================
+# IDE / Editor Files
+# =========================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# =========================
+# Logs / Temp Files
+# =========================
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.tmp
+*.swp
+*.bak
+*.orig
+
+# Coverage / Test
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+htmlcov/
+
+# =========================
+# Environment / Secrets
+# =========================
+.env
+.env.local
+.env.production
+.env.development
+*.secret
+*.key
+secrets.json
