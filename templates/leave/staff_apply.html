@@ -1,0 +1,53 @@
+{% extends "base_user.html" %}
+{% block title %}Apply for Leave - StaffHub{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <h2 class="h4 fw-bold mb-4">Apply for Leave</h2>
+
+  <div class="card shadow-sm rounded-4 border-0">
+    <div class="card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <!-- Leave Type -->
+        <div class="mb-3">
+          <label for="id_leave_type" class="form-label">{{ form.leave_type.label }}</label>
+          {{ form.leave_type }}
+          <div class="invalid-feedback d-block">{{ form.leave_type.errors }}</div>
+        </div>
+
+        <!-- Start Date -->
+        <div class="mb-3">
+          <label for="id_start_date" class="form-label">{{ form.start_date.label }}</label>
+          {{ form.start_date }}
+          <div class="invalid-feedback d-block">{{ form.start_date.errors }}</div>
+        </div>
+
+        <!-- End Date -->
+        <div class="mb-3">
+          <label for="id_end_date" class="form-label">{{ form.end_date.label }}</label>
+          {{ form.end_date }}
+          <div class="invalid-feedback d-block">{{ form.end_date.errors }}</div>
+        </div>
+
+        <!-- Reason -->
+        <div class="mb-3">
+          <label for="id_reason" class="form-label">{{ form.reason.label }}</label>
+          {{ form.reason }}
+          <div class="invalid-feedback d-block">{{ form.reason.errors }}</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 py-2 shadow-sm">
+          <i class="bi bi-send me-2"></i> Submit Request
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

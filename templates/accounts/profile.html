@@ -1,0 +1,17 @@
+{% extends "base_user.html" %}
+{% load static %}
+
+{% block title %}My Profile - StaffHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">My Profile</h2>
+    <form method="post" class="card shadow-sm p-4">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="d-grid">
+            <button type="submit" class="btn btn-success">Save Changes</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

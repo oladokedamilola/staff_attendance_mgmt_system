@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}StaffHub{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+    <style>
+        /* Sidebar Styles */
+        aside#sidebar {
+            position: fixed;
+            top: 0;
+            left: -300px; /* hidden by default */
+            width: 25%;
+            height: 100%;
+            background-color: #4CAF50;
+            color: #FAFAFA;
+            transition: left 0.3s ease;
+            z-index: 1040;
+            overflow-y: auto;
+            padding-top: 2rem;
+        }
+
+        aside#sidebar.active {
+            left: 0;
+        }
+
+        aside#sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        aside#sidebar ul li {
+            padding: 0.75rem 1rem;
+        }
+
+        aside#sidebar ul li strong {
+            display: block;
+            text-align: center;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        aside#sidebar ul li a {
+            color: #FAFAFA;
+            text-decoration: none;
+            display: block;
+            padding: 0.75rem 1rem;
+            transition: background-color 0.3s, color 0.3s;
+            border-radius: 0.25rem;
+        }
+
+        aside#sidebar ul li a:hover:not(.logout-link) {
+            background-color: #8BC34A;
+            color: #FAFAFA;
+        }
+
+        aside#sidebar ul li a.active {
+            background-color: #FFC107;
+            color: #333;
+            font-weight: 600;
+        }
+
+        aside#sidebar ul li a.logout-link:hover {
+            background-color: #F44336;
+            color: #FAFAFA;
+        }
+
+        #sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1030;
+        }
+
+        /* Sidebar toggle buttons */
+        #sidebarToggle, #sidebarClose {
+            position: fixed;
+            top: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1050;
+        }
+
+        #sidebarToggle {
+            left: 1rem;
+            color: #4CAF50;
+        }
+
+        #sidebarClose {
+            right: 1rem;
+            color: #FAFAFA;
+            display: none;
+        }
+
+        /* Main content */
+        #content {
+            margin-left: 25%;
+            padding: 1rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        @media (max-width: 992px) {
+            aside#sidebar {
+                width: 75%;
+                left: -75%;
+            }
+            aside#sidebar.active {
+                left: 0;
+            }
+            #content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Flash Messages -->
+    <div id="flash-messages" class="position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index: 1050;">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mx-auto text-center" role="alert" style="min-width: 300px; max-width: 450px;">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Sidebar Toggle Buttons -->
+    <span id="sidebarToggle">&#9776;</span>
+    <span id="sidebarClose">&times;</span>
+
+    <!-- Sidebar -->
+    <aside id="sidebar">
+        <ul>
+            {% if user.is_authenticated %}
+                <li><strong>{{ user.username }}</strong></li>
+                {% if user.is_staff_user %}
+                    <li><a href="{% url 'staff_dashboard' %}" class="{% if request.path == '/staff/dashboard/' %}active{% endif %}">Dashboard</a></li>
+                    <li><a href="{% url 'attendance_history' %}" class="{% if request.path == '/staff/attendance/' %}active{% endif %}">Attendance</a></li>
+                    <li><a href="{% url 'my_leave_requests' %}" class="{% if request.path == '/staff/leaves/' %}active{% endif %}">Leave Requests</a></li>
+                {% elif user.is_admin_user %}
+                    <li><a href="{% url 'admin_dashboard' %}" class="{% if request.path == '/admin/dashboard/' %}active{% endif %}">Dashboard</a></li>
+                    <li><a href="{% url 'manage_staff' %}" class="{% if request.path == '/admin/staff/' %}active{% endif %}">Staff Management</a></li>
+                    <li><a href="{% url 'leave_requests' %}" class="{% if request.path == '/admin/leaves/' %}active{% endif %}">Leave Approvals</a></li>
+                    <li><a href="{% url 'attendance_reports' %}" class="{% if request.path == '/admin/reports/' %}active{% endif %}">Reports</a></li>
+                {% endif %}
+                <li><a href="{% url 'profile' %}" class="{% if request.path == '/profile/' %}active{% endif %}">Profile</a></li>
+                <li><a href="{% url 'logout' %}" class="logout-link">Logout</a></li>
+            {% endif %}
+        </ul>
+    </aside>
+
+    <!-- Overlay for mobile -->
+    <div id="sidebar-overlay"></div>
+
+    <!-- Main Content -->
+    <main id="content">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    {% block footer %}
+        <footer class="footer mt-auto py-4 bg-dark text-light">
+            <div class="container text-center">
+                <small>&copy; {{ current_year }} StaffHub. All rights reserved.</small>
+            </div>
+        </footer>
+    {% endblock %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Flash Messages Auto-dismiss -->
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const alerts = document.querySelectorAll('#flash-messages .alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                    bsAlert.close();
+                }, 10000);
+            });
+        });
+    </script>
+
+    <!-- Sidebar Toggle Script -->
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarClose = document.getElementById('sidebarClose');
+
+        function openSidebar() {
+            sidebar.classList.add('active');
+            overlay.style.display = 'block';
+            sidebarToggle.style.display = 'none';
+            sidebarClose.style.display = 'block';
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('active');
+            overlay.style.display = 'none';
+            sidebarToggle.style.display = 'block';
+            sidebarClose.style.display = 'none';
+        }
+
+        sidebarToggle.addEventListener('click', openSidebar);
+        sidebarClose.addEventListener('click', closeSidebar);
+        overlay.addEventListener('click', closeSidebar);
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

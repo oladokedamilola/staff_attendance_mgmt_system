@@ -1,0 +1,92 @@
+{% extends "base_user.html" %}
+{% block title %}{% if staff %}Edit Staff{% else %}Add Staff{% endif %} - StaffHub{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <h2 class="h4 fw-bold mb-4">
+    {% if staff %}Edit Staff: {{ staff.username }}{% else %}Add New Staff{% endif %}
+  </h2>
+
+  <div class="card shadow-sm rounded-4 border-0">
+    <div class="card-body">
+      <form method="post" id="staffForm" novalidate>
+        {% csrf_token %}
+
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="id_username" class="form-label">{{ form.username.label }}</label>
+            {{ form.username }}
+            <div class="invalid-feedback d-block">{{ form.username.errors }}</div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="id_email" class="form-label">{{ form.email.label }}</label>
+            {{ form.email }}
+            <div class="invalid-feedback d-block">{{ form.email.errors }}</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Role</label>
+            {{ form.is_superuser }}
+            <div class="form-text">Check to make this user an Admin.</div>
+            <div class="invalid-feedback d-block">{{ form.is_superuser.errors }}</div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Status</label>
+            {{ form.is_active }}
+            <div class="form-text">Uncheck to deactivate this staff member.</div>
+            <div class="invalid-feedback d-block">{{ form.is_active.errors }}</div>
+          </div>
+        </div>
+
+        {% if not staff %}
+        <div class="mb-3">
+          <label for="id_password1" class="form-label">{{ form.password1.label }}</label>
+          {{ form.password1 }}
+          <div class="invalid-feedback d-block">{{ form.password1.errors }}</div>
+        </div>
+        <div class="mb-3">
+          <label for="id_password2" class="form-label">{{ form.password2.label }}</label>
+          {{ form.password2 }}
+          <div class="invalid-feedback d-block">{{ form.password2.errors }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Trigger modal instead of submitting -->
+        <button type="button" class="btn btn-primary w-100 py-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#confirmSaveModal">
+          <i class="bi bi-save me-2"></i>
+          {% if staff %}Save Changes{% else %}Add Staff{% endif %}
+        </button>
+
+        <!-- Confirmation Modal -->
+        <div class="modal fade" id="confirmSaveModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4">
+              <div class="modal-header">
+                <h5 class="modal-title">Confirm {% if staff %}Update{% else %}Addition{% endif %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                Are you sure you want to {% if staff %}save changes to <strong>{{ staff.username }}</strong>{% else %}add this new staff member{% endif %}?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="staffForm" class="btn btn-primary">
+                  <i class="bi bi-check-circle me-1"></i> Yes, Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

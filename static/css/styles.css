@@ -1,0 +1,210 @@
+/* ========================================
+   StaffHub Branding Styles
+   Author: StaffHub Theme
+   Colors: Primary Green (#4CAF50), Secondary (#8BC34A), Accent (#FFC107)
+   Typography: Poppins (headings), Lato (body)
+======================================== */
+
+/* ------------------------------
+   Base Styles
+------------------------------ */
+body {
+    font-family: 'Lato', sans-serif;
+    background-color: #FAFAFA;
+    color: #333333;
+    margin: 0;
+    padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: #333333;
+    margin-bottom: 0.5rem;
+}
+
+a {
+    color: #4CAF50;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #8BC34A;
+    text-decoration: underline;
+}
+
+/* ------------------------------
+   Navbar/Header
+------------------------------ */
+.navbar {
+    background-color: #4CAF50;
+    padding: 0.75rem 1rem;
+}
+
+.navbar .navbar-brand {
+    color: #FAFAFA;
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.navbar .nav-link {
+    color: #FAFAFA;
+    margin-right: 1rem;
+}
+
+.navbar .nav-link:hover {
+    color: #FFC107;
+}
+
+/* ------------------------------
+   Footer
+------------------------------ */
+footer {
+    background-color: #333333;
+    color: #FAFAFA;
+    padding: 1rem 0;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+/* ------------------------------
+   Buttons
+------------------------------ */
+.btn-primary {
+    background-color: #4CAF50;
+    border-color: #4CAF50;
+    color: #FAFAFA;
+}
+
+.btn-primary:hover {
+    background-color: #8BC34A;
+    border-color: #8BC34A;
+}
+
+.btn-accent {
+    background-color: #FFC107;
+    border-color: #FFC107;
+    color: #333333;
+}
+
+.btn-accent:hover {
+    background-color: #FFB300;
+    border-color: #FFB300;
+    color: #333333;
+}
+
+/* ------------------------------
+   Cards
+------------------------------ */
+.card {
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: #4CAF50;
+    color: #FAFAFA;
+    font-weight: 600;
+}
+
+/* ------------------------------
+   Forms
+------------------------------ */
+.form-control {
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #CED4DA;
+}
+
+.form-control:focus {
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+}
+
+label {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+/* ------------------------------
+   Alerts
+------------------------------ */
+.alert-success {
+    background-color: #4CAF50;
+    color: #FAFAFA;
+    border-radius: 0.5rem;
+}
+
+.alert-info {
+    background-color: #8BC34A;
+    color: #FAFAFA;
+    border-radius: 0.5rem;
+}
+
+.alert-warning {
+    background-color: #FFC107;
+    color: #333333;
+    border-radius: 0.5rem;
+}
+
+.alert-danger {
+    background-color: #F44336;
+    color: #FAFAFA;
+    border-radius: 0.5rem;
+}
+
+/* ------------------------------
+   Tables
+------------------------------ */
+.table th {
+    background-color: #4CAF50;
+    color: #FAFAFA;
+    font-weight: 600;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #F5F5F5;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #E8F5E9;
+}
+
+/* ------------------------------
+   Cards / Dashboard Metrics
+------------------------------ */
+.metric-card {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background-color: #FAFAFA;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.metric-card h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #4CAF50;
+}
+
+.metric-card p {
+    font-size: 1rem;
+    margin: 0;
+    color: #333333;
+}
+
+/* ------------------------------
+   Responsive Utilities
+------------------------------ */
+@media (max-width: 768px) {
+    .navbar .nav-link {
+        margin-right: 0.5rem;
+    }
+
+    .metric-card {
+        margin-bottom: 1rem;
+    }
+}
