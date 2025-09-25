@@ -1,4 +1,3 @@
-# staff/views.py
 from datetime import date
 
 from django.shortcuts import render, redirect
@@ -16,7 +15,8 @@ from .forms import StaffProfileForm
 def staff_dashboard(request):
     """Staff dashboard showing attendance & leave summaries."""
     if not request.user.is_staff_user():
-        return redirect("accounts:login")
+        messages.error(request, "Access denied. Staff account required.")
+        return redirect("login")
 
     # Attendance summary
     total_attendance = Attendance.objects.filter(staff=request.user).count()
@@ -40,16 +40,19 @@ def staff_dashboard(request):
         "pending_leaves": pending_leaves,
         "rejected_leaves": rejected_leaves,
     }
-    return render(request, "staff/dashboard.html", context)
+    return render(request, "dashboard/staff_dashboard.html", context)
 
 
 @login_required
 def attendance_history(request):
     """Staff can view their attendance history."""
     if not request.user.is_staff_user():
-        return redirect("accounts:login")
+        messages.error(request, "Access denied. Staff account required.")
+        return redirect("login")
 
     records = Attendance.objects.filter(staff=request.user).order_by("-date")
+    if not records.exists():
+        messages.info(request, "No attendance records found yet.")
     return render(request, "staff/attendance_history.html", {"records": records})
 
 
@@ -57,7 +60,8 @@ def attendance_history(request):
 def apply_leave(request):
     """Staff can apply for leave from their dashboard."""
     if not request.user.is_staff_user():
-        return redirect("accounts:login")
+        messages.error(request, "Access denied. Staff account required.")
+        return redirect("login")
 
     if request.method == "POST":
         leave_type = request.POST.get("leave_type")
@@ -72,8 +76,8 @@ def apply_leave(request):
             end_date=end_date,
             reason=reason,
         )
-        messages.success(request, "Leave request submitted")
-        return redirect("staff:staff_dashboard")
+        messages.success(request, "Your leave request has been submitted successfully.")
+        return redirect("staff_dashboard")
 
     return render(request, "staff/apply_leave.html")
 
@@ -82,39 +86,12 @@ def apply_leave(request):
 def my_leave_requests(request):
     """Staff can view their submitted leave requests."""
     if not request.user.is_staff_user():
-        return redirect("accounts:login")
+        messages.error(request, "Access denied. Staff account required.")
+        return redirect("login")
 
     leaves = Leave.objects.filter(staff=request.user).order_by("-applied_at")
+    if not leaves.exists():
+        messages.info(request, "You have not submitted any leave requests yet.")
     return render(request, "staff/my_leave_requests.html", {"leaves": leaves})
 
 
-@login_required
-def profile(request):
-    """Staff can update their profile and change password."""
-    if not request.user.is_staff_user():
-        return redirect("accounts:login")
-
-    if request.method == "POST":
-        profile_form = StaffProfileForm(request.POST, instance=request.user)
-        password_form = PasswordChangeForm(request.user, request.POST)
-
-        if "update_profile" in request.POST and profile_form.is_valid():
-            profile_form.save()
-            messages.success(request, "Profile updated successfully")
-            return redirect("staff:profile")
-
-        if "change_password" in request.POST and password_form.is_valid():
-            user = password_form.save()
-            update_session_auth_hash(request, user)  # keep user logged in
-            messages.success(request, "Password changed successfully")
-            return redirect("staff:profile")
-
-    else:
-        profile_form = StaffProfileForm(instance=request.user)
-        password_form = PasswordChangeForm(request.user)
-
-    context = {
-        "profile_form": profile_form,
-        "password_form": password_form,
-    }
-    return render(request, "staff/profile.html", context)

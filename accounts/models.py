@@ -3,12 +3,18 @@ from django.db import models
 import uuid
 
 class User(AbstractUser):
-    # Roles: staff vs admin
     ROLE_CHOICES = (
         ("staff", "Staff"),
         ("admin", "Admin"),
     )
+
+    username = models.CharField(max_length=150, unique=False, blank=True, null=True)
+    email = models.EmailField(unique=True)
+
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default="staff")
+
+    USERNAME_FIELD = "email"   # <--- Email is the login field
+    REQUIRED_FIELDS = []      
 
     def is_staff_user(self):
         return self.role == "staff"

@@ -1,7 +1,6 @@
 {% extends "base_user.html" %}
-{% load static %}
 
-{% block title %}My Profile - StaffHub{% endblock %}
+{% block title %}Edit Staff{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -9,7 +8,7 @@
         <div class="col-md-8 col-lg-6">
             <div class="card shadow-sm">
                 <div class="card-header">
-                    My Profile
+                    Edit Staff
                 </div>
                 <div class="card-body p-4">
                     <form method="post" novalidate>
@@ -42,10 +41,20 @@
                                 <div class="text-danger small">{{ form.last_name.errors }}</div>
                             {% endif %}
                         </div>
-                        <div class="d-grid">
+                        <div class="mb-3 form-check">
+                            {{ form.is_active }}
+                            {{ form.is_active.label_tag }}
+                            {% if form.is_active.errors %}
+                                <div class="text-danger small">{{ form.is_active.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex justify-content-between">
                             <button type="submit" class="btn btn-primary">
                                 Save Changes
                             </button>
+                            <a href="{% url 'manage_staff' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
                         </div>
                     </form>
                 </div>

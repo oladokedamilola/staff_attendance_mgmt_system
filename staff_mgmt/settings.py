@@ -1,14 +1,58 @@
 from pathlib import Path
 import os
+from datetime import timedelta
+from decouple import config
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# ==========================
+# 🔐 Security Keys
+# ==========================
+SECRET_KEY = config(
+    "DJANGO_SECRET_KEY",
+    default="unsafe-secret-key-change-in-production"
+)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-6+8_e3jw)m^*%gr=z0yxn#86-e#%o&csy0povg4yzi6%jk*e(4'
+
+# ==========================
+# 📧 Email Settings
+# ==========================
+EMAIL_BACKEND = config(
+    "DJANGO_EMAIL_BACKEND",
+)
+EMAIL_HOST = config("DJANGO_EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_PORT = config("DJANGO_EMAIL_PORT", cast=int, default=587)
+EMAIL_USE_TLS = config("DJANGO_EMAIL_USE_TLS", cast=bool, default=True)
+EMAIL_HOST_USER = config("DJANGO_EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = config("DJANGO_EMAIL_HOST_PASSWORD", default="")
+DEFAULT_FROM_EMAIL = config(
+    "DEFAULT_FROM_EMAIL",
+    default=f"StaffHub <{EMAIL_HOST_USER}>"
+)
+
+# ==========================
+# 🍪 Session Settings
+# ==========================
+SESSION_ENGINE = config(
+    "SESSION_ENGINE",
+    default="django.contrib.sessions.backends.db"
+)
+SESSION_COOKIE_NAME = "sessionid"
+SESSION_COOKIE_AGE = config("SESSION_COOKIE_AGE", cast=int, default=3600)  # 1hr in seconds
+SESSION_SAVE_EVERY_REQUEST = config("SESSION_SAVE_EVERY_REQUEST", cast=bool, default=True)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = config("SESSION_EXPIRE_AT_BROWSER_CLOSE", cast=bool, default=True)
+
+# ==========================
+# ⏳ Token Expiry Times
+# ==========================
+OTP_EXPIRY_MINUTES = config("OTP_EXPIRY_MINUTES", cast=int, default=10)
+PASSWORD_RESET_TOKEN_EXPIRY_HOURS = config("PASSWORD_RESET_TOKEN_EXPIRY_HOURS", cast=int, default=1)
+
+# Helper variables for use in views/services
+OTP_EXPIRY_DELTA = timedelta(minutes=OTP_EXPIRY_MINUTES)
+PASSWORD_RESET_TOKEN_EXPIRY_DELTA = timedelta(hours=PASSWORD_RESET_TOKEN_EXPIRY_HOURS)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -17,7 +61,6 @@ ALLOWED_HOSTS = []
 
 AUTH_USER_MODEL = "accounts.User"
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Application definition
 
@@ -37,6 +80,8 @@ INSTALLED_APPS = [
     "staff",
     "adminpanel",
     "core",
+    
+    "django_extensions",
 ]
 
 MIDDLEWARE = [
@@ -68,6 +113,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'staff_mgmt.wsgi.application'
 
+from django.contrib.messages import constants as messages
+
+MESSAGE_TAGS = {
+    messages.DEBUG: 'secondary',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'danger',
+}
+
+
+# Authentication settings
+LOGIN_URL = '/accounts/login/'  # login URL
+LOGIN_REDIRECT_URL = '/'    # Where to redirect after successful login
+LOGOUT_REDIRECT_URL = '/'   # Where to redirect after logout
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases

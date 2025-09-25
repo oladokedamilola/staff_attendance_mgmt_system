@@ -1,0 +1,93 @@
+{% extends "base_user.html" %}
+{% block title %}Send Staff Invite{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header">Send Staff Invitation</div>
+                <div class="card-body p-4">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            {{ form.email.label_tag }}
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="text-danger small">{{ form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Send Invitation</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Used Invitations -->
+    <h4 class="mb-3">Registered Staff</h4>
+    <div class="card mb-5 shadow-sm">
+        <div class="card-body">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Registered At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invite in used_invitations %}
+                    <tr>
+                        <td>{{ invite.email }}</td>
+                        <td>{{ invite.created_at }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="text-center text-muted">No staff registered yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pending Invitations -->
+    <h4 class="mb-3">Pending Invitations</h4>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Invited On</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invite in pending_invitations %}
+                    <tr>
+                        <td>{{ invite.email }}</td>
+                        <td>{{ invite.created_at }}</td>
+                        <td>
+                            <form method="post" style="display:inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="revoke_id" value="{{ invite.id }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    Revoke
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">No pending invitations.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

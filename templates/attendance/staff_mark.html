@@ -2,23 +2,26 @@
 {% block title %}Mark Attendance - StaffHub{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-  <h2 class="h4 fw-bold mb-4">Mark Attendance</h2>
+<div class="container-fluid py-5">
+  <h2 class="mb-4">Mark Attendance</h2>
 
-  <!-- Attendance Status -->
+  <!-- Attendance Card -->
   <div class="card shadow-sm rounded-4 border-0">
-    <div class="card-body text-center">
+    <div class="card-body text-center py-5">
       {% if already_marked %}
-        <h5 class="text-success mb-3">✅ You have already marked your attendance today.</h5>
-        <p class="text-muted">Marked at {{ marked_time }}</p>
+        <div class="alert alert-success d-inline-block px-4 py-3 rounded-3 shadow-sm">
+          <h5 class="mb-2">✅ Attendance Marked</h5>
+          <p class="mb-0 text-muted">You marked attendance today at <strong>{{ marked_time }}</strong>.</p>
+        </div>
       {% else %}
-        <h5 class="mb-3">📍 Location-based or manual attendance</h5>
+        <h5 class="mb-4">📍 Location-based or manual attendance</h5>
         <form method="post">
           {% csrf_token %}
           <button type="submit" class="btn btn-primary btn-lg rounded-4 px-4 shadow-sm">
             <i class="bi bi-check2-circle me-2"></i> Mark Attendance
           </button>
         </form>
+        <p class="text-muted mt-3">Today: {{ today_date }}</p>
       {% endif %}
     </div>
   </div>

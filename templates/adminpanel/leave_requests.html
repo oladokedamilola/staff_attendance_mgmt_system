@@ -1,0 +1,55 @@
+{% extends "base_user.html" %}
+
+{% block title %}Leave Requests{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4">Pending Leave Requests</h2>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Staff</th>
+                            <th>Type</th>
+                            <th>Dates</th>
+                            <th>Reason</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for leave in pending_leaves %}
+                        <tr>
+                            <td>{{ leave.staff.get_full_name }}</td>
+                            <td>{{ leave.leave_type }}</td>
+                            <td>{{ leave.start_date }} → {{ leave.end_date }}</td>
+                            <td>{{ leave.reason }}</td>
+                            <td>
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="leave_id" value="{{ leave.id }}">
+                                    <button type="submit" name="action" value="approve" class="btn btn-sm btn-primary">
+                                        Approve
+                                    </button>
+                                    <button type="submit" name="action" value="reject" class="btn btn-sm btn-accent">
+                                        Reject
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                No pending leave requests.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
