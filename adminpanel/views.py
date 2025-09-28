@@ -82,6 +82,9 @@ def send_staff_invite(request):
 
 
 
+from django.db.models import Count
+from datetime import timedelta, date
+
 @login_required
 def admin_dashboard(request):
     """Admin dashboard with stats overview."""
@@ -92,14 +95,32 @@ def admin_dashboard(request):
     today = date.today()
     today_attendance = Attendance.objects.filter(date=today)
 
+    # Last 7 days attendance % (present / total * 100)
+    last_7_days = [today - timedelta(days=i) for i in range(6, -1, -1)]
+    chart_labels = [d.strftime("%b %d") for d in last_7_days]
+    chart_data = []
+    for d in last_7_days:
+        records = Attendance.objects.filter(date=d)
+        total = records.count()
+        if total > 0:
+            present = records.filter(status="present").count()
+            percent = round((present / total) * 100, 2)
+        else:
+            percent = 0
+        chart_data.append(percent)
+
     context = {
         "total_staff": User.objects.filter(role="staff").count(),
-        "present_count": today_attendance.filter(status="present").count(),
-        "absent_count": today_attendance.filter(status="absent").count(),
-        "late_count": today_attendance.filter(status="late").count(),
+        "present_today": today_attendance.filter(status="present").count(),
+        "absent_today": today_attendance.filter(status="absent").count(),
+        "late_today": today_attendance.filter(status="late").count(),
         "pending_leaves": Leave.objects.filter(status="pending").count(),
+        "recent_leaves": Leave.objects.order_by("-applied_at")[:5],
+        "chart_labels": chart_labels,
+        "chart_data": chart_data,
     }
     return render(request, "dashboard/admin_dashboard.html", context)
+
 
 
 @login_required
@@ -127,7 +148,7 @@ def edit_staff(request, staff_id):
         form = StaffForm(request.POST, instance=staff)
         if form.is_valid():
             form.save()
-            messages.success(request, f"Staff member {staff.username} updated successfully.")
+            messages.success(request, f"Staff member {staff} updated successfully.")
             return redirect("manage_staff")
         else:
             messages.error(request, "There was an error updating this staff member. Please review the form.")
@@ -136,10 +157,11 @@ def edit_staff(request, staff_id):
 
     return render(request, "adminpanel/edit_staff.html", {"form": form})
 
+from leave.utils import send_leave_notification
 
 @login_required
 def leave_requests(request):
-    """Approve or reject leave requests."""
+    """Approve or reject leave requests and notify staff."""
     if not request.user.is_admin_user():
         messages.error(request, "You do not have access to leave requests.")
         return redirect("home")
@@ -151,16 +173,48 @@ def leave_requests(request):
         action = request.POST.get("action")
         leave = get_object_or_404(Leave, id=leave_id)
 
-        if action == "approve":
-            leave.status = "approved"
-            leave.save()
-            messages.success(request, f"Leave request for {leave.staff.username} approved.")
-        elif action == "reject":
-            leave.status = "rejected"
-            leave.save()
-            messages.info(request, f"Leave request for {leave.staff.username} rejected.")
-        else:
-            messages.error(request, "Invalid action provided for leave request.")
+        try:
+            if action == "approve":
+                leave.status = "approved"
+                leave.save()
+                messages.success(request, f"Leave request for {leave.staff.get_full_name()} approved.")
+
+                # Notify the staff
+                send_leave_notification(
+                    sender=request.user,
+                    recipient=leave.staff,
+                    subject="Leave Request Approved",
+                    message=(
+                        f"Your leave request ({leave.leave_type}) from {leave.start_date} "
+                        f"to {leave.end_date} has been approved."
+                    ),
+                    request=request  # optional on-site notification
+                )
+
+            elif action == "reject":
+                leave.status = "rejected"
+                leave.save()
+                messages.info(request, f"Leave request for {leave.staff.get_full_name()} rejected.")
+
+                # Notify the staff
+                send_leave_notification(
+                    sender=request.user,
+                    recipient=leave.staff,
+                    subject="Leave Request Rejected",
+                    message=(
+                        f"Your leave request ({leave.leave_type}) from {leave.start_date} "
+                        f"to {leave.end_date} has been rejected."
+                    ),
+                    request=request
+                )
+            else:
+                messages.error(request, "Invalid action provided for leave request.")
+
+        except Exception as e:
+            messages.warning(
+                request,
+                f"Leave status updated, but failed to send notification. Error logged."
+            )
 
         return redirect("leave_requests")
 
@@ -168,32 +222,3 @@ def leave_requests(request):
         messages.info(request, "No pending leave requests at the moment.")
 
     return render(request, "adminpanel/leave_requests.html", {"pending_leaves": pending_leaves})
-
-
-@login_required
-def attendance_reports(request):
-    """View attendance reports with filtering."""
-    if not request.user.is_admin_user():
-        messages.error(request, "Access denied. Admin privileges required.")
-        return redirect("home")
-
-    records = Attendance.objects.all().order_by("-date")
-
-    staff_id = request.GET.get("staff")
-    start_date = request.GET.get("start_date")
-    end_date = request.GET.get("end_date")
-
-    if staff_id:
-        records = records.filter(staff__id=staff_id)
-        messages.info(request, f"Filtered records for staff ID {staff_id}.")
-    if start_date:
-        records = records.filter(date__gte=start_date)
-        messages.info(request, f"Showing records from {start_date}.")
-    if end_date:
-        records = records.filter(date__lte=end_date)
-        messages.info(request, f"Showing records until {end_date}.")
-
-    if not records.exists():
-        messages.warning(request, "No attendance records found for the selected filters.")
-
-    return render(request, "adminpanel/attendance_reports.html", {"records": records})

@@ -6,6 +6,7 @@ from . import views
 
 urlpatterns = [
     path("apply/", views.apply_leave, name="apply_leave"),
-    path("manage/", views.manage_leave, name="manage_leave"),
     path("report/", views.leave_report, name="leave_report"),
+    path("report/export/<str:export_format>/", views.leave_export, name="leave_export"),
+
 ]

@@ -24,7 +24,7 @@ def login_view(request):
 
         if user:
             login(request, user)
-            messages.success(request, f"Welcome back, {user.username}!")
+            messages.success(request, f"Welcome back, {user.first_name}!")
 
             if user.role == "admin":
                 return redirect("admin_dashboard")
@@ -74,14 +74,15 @@ def logout_view(request):
 def profile_view(request):
     """Allow user to update their profile."""
     if request.method == "POST":
-        form = ProfileUpdateForm(request.POST, instance=request.user)
+        form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user)  # include request.FILES
         if form.is_valid():
             form.save()
             messages.success(request, "Your profile has been updated successfully.")
-            return redirect("profile")
+            return redirect("admin_dashboard" if request.user.role == "admin" else "staff_dashboard")
         else:
             messages.error(request, "There were errors in your form. Please correct them below.")
     else:
         form = ProfileUpdateForm(instance=request.user)
 
     return render(request, "accounts/profile.html", {"form": form})
+

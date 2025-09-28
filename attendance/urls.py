@@ -6,6 +6,8 @@ from . import views
 
 urlpatterns = [
     path("mark/", views.mark_attendance, name="mark_attendance"),
-    path("manage/", views.manage_attendance, name="manage_attendance"),
     path("report/", views.attendance_report, name="attendance_report"),
+    path("attendance-export/<str:file_type>/", views.attendance_export, name="attendance_export"),
+
+    
 ]

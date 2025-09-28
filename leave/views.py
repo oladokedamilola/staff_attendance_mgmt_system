@@ -3,87 +3,261 @@ import csv
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.http import HttpResponse
+from django.contrib.auth import get_user_model
+from django.contrib import messages
+
+User = get_user_model()
 
 from .models import Leave
 from .forms import LeaveApplicationForm
 
+from .utils import send_leave_notification
 @login_required
 def apply_leave(request):
-    """Allow staff to apply for leave."""
+    """Staff can apply for leave. Admins are notified via email and on-site notifications."""
     if not request.user.is_staff_user():
         messages.error(request, "Access denied. Staff account required.")
         return redirect("login")
 
     if request.method == "POST":
-        form = LeaveApplicationForm(request.POST)
+        form = LeaveApplicationForm(request.POST, request.FILES)
         if form.is_valid():
             leave = form.save(commit=False)
             leave.staff = request.user
             leave.save()
-            messages.success(request, "Your leave request has been submitted successfully.")
-            return redirect("staff_dashboard")
+
+            try:
+                # Notify all admins
+                admins = User.objects.filter(role="admin")
+                if admins.exists():
+                    send_leave_notification(
+                        sender=request.user,
+                        recipient=admins,
+                        subject="New Leave Request Submitted",
+                        message=(
+                            f"{request.user.get_full_name()} submitted a new leave request "
+                            f"({leave.leave_type}) from {leave.start_date} to {leave.end_date}."
+                        ),
+                        request=request  # optional on-site notification
+                    )
+            except Exception as e:
+                # Log error and notify staff
+                messages.warning(
+                    request,
+                    f"Leave submitted, but failed to notify admins. Error logged."
+                )
+
+            messages.success(request, "Leave application submitted successfully.")
+            return redirect("my_leave_requests")
+        else:
+            messages.error(request, "Please correct the errors below.")
     else:
         form = LeaveApplicationForm()
 
-    return render(request, "leave/apply_leave.html", {"form": form})
+    return render(request, "staff/apply_leave.html", {"form": form})
 
 
-@login_required
-def manage_leave(request):
-    """Admins can approve/reject leave requests."""
-    if not request.user.is_admin_user():
-        messages.error(request, "Access denied. Admin privileges required.")
-        return redirect("login")
+import csv
+from django.http import HttpResponse
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from .models import Leave
+import openpyxl
+from openpyxl.utils import get_column_letter
+from io import BytesIO
 
-    leaves = Leave.objects.all().order_by("-applied_at")
-
-    if not leaves.exists():
-        messages.info(request, "No leave requests available at the moment.")
-
-    if request.method == "POST":
-        leave_id = request.POST.get("leave_id")
-        action = request.POST.get("action")
-        leave = get_object_or_404(Leave, id=leave_id)
-
-        if action == "approve":
-            leave.status = "approved"
-            messages.success(request, f"Leave request for {leave.staff.username} has been approved.")
-        elif action == "reject":
-            leave.status = "rejected"
-            messages.warning(request, f"Leave request for {leave.staff.username} has been rejected.")
-        else:
-            messages.error(request, "Invalid action provided.")
-            return redirect("manage_leave")
-
-        leave.save()
-        return redirect("manage_leave")
-
-    return render(request, "leave/manage_leave.html", {"leaves": leaves})
-
+from django.db.models import Count
+from django.db.models.functions import TruncDate
 
 @login_required
 def leave_report(request):
-    """Admins can view or export leave reports."""
+    """Admins can view leave reports with filters and trend chart."""
     if not request.user.is_admin_user():
         messages.error(request, "Access denied. Admin privileges required.")
         return redirect("login")
 
     leaves = Leave.objects.all().order_by("staff", "-applied_at")
 
-    if request.GET.get("export") == "csv":
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="leave_report.csv"'
+    # Filters
+    staff_email = request.GET.get("staff")
+    status = request.GET.get("status")
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
 
-        writer = csv.writer(response)
-        writer.writerow(["Staff", "Leave Type", "Start Date", "End Date", "Status"])
-        for l in leaves:
-            writer.writerow([l.staff.username, l.leave_type, l.start_date, l.end_date, l.status])
-
-        messages.success(request, "Leave report exported successfully as CSV.")
-        return response
+    if staff_email:
+        leaves = leaves.filter(staff__email__icontains=staff_email)
+    if status:
+        leaves = leaves.filter(status__iexact=status.lower())
+    if start_date:
+        leaves = leaves.filter(start_date__gte=start_date)
+    if end_date:
+        leaves = leaves.filter(end_date__lte=end_date)
 
     if not leaves.exists():
         messages.warning(request, "No leave records found to display.")
 
-    return render(request, "leave/leave_report.html", {"leaves": leaves})
+    # Aggregate daily leave counts for the trend chart
+    trend_data = leaves.annotate(date_only=TruncDate('applied_at')) \
+                       .values('date_only', 'status') \
+                       .annotate(count=Count('id')) \
+                       .order_by('date_only')
+
+    # Prepare chart data
+    chart_labels = sorted({td['date_only'].strftime("%Y-%m-%d") for td in trend_data})
+
+    # Initialize trends with 0 counts
+    pending_trend = [0] * len(chart_labels)
+    approved_trend = [0] * len(chart_labels)
+    rejected_trend = [0] * len(chart_labels)
+
+    # Fill in counts
+    for td in trend_data:
+        date_str = td['date_only'].strftime("%Y-%m-%d")
+        index = chart_labels.index(date_str)
+        if td['status'] == 'pending':
+            pending_trend[index] = td['count']
+        elif td['status'] == 'approved':
+            approved_trend[index] = td['count']
+        elif td['status'] == 'rejected':
+            rejected_trend[index] = td['count']
+
+    # Total counts for badges
+    pending_count = leaves.filter(status="pending").count()
+    approved_count = leaves.filter(status="approved").count()
+    rejected_count = leaves.filter(status="rejected").count()
+
+    return render(request, "leave/admin_requests.html", {
+        "leave_requests": leaves,
+        "pending_count": pending_count,
+        "approved_count": approved_count,
+        "rejected_count": rejected_count,
+        "chart_labels": chart_labels,
+        "pending_trend": pending_trend,
+        "approved_trend": approved_trend,
+        "rejected_trend": rejected_trend,
+    })
+
+
+@login_required
+def leave_export(request, export_format):
+    """Export leave report as CSV or Excel."""
+    if not request.user.is_admin_user():
+        messages.error(request, "Access denied. Admin privileges required.")
+        return redirect("login")
+
+    leaves = Leave.objects.all().order_by("staff", "-applied_at")
+
+    # Apply the same filters as in leave_report
+    staff_email = request.GET.get("staff")
+    status = request.GET.get("status")
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+
+    if staff_email:
+        leaves = leaves.filter(staff__email__icontains=staff_email)
+    if status:
+        leaves = leaves.filter(status__iexact=status.lower())
+    if start_date:
+        leaves = leaves.filter(start_date__gte=start_date)
+    if end_date:
+        leaves = leaves.filter(end_date__lte=end_date)
+
+    if export_format == "csv":
+        import csv
+        from django.http import HttpResponse
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="leave_report.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(["Staff", "Email", "Leave Type", "Start Date", "End Date", "Status", "Reason"])
+        for leave in leaves:
+            writer.writerow([
+                leave.staff.get_full_name,
+                leave.staff.email,
+                leave.leave_type,
+                leave.start_date,
+                leave.end_date,
+                leave.status.capitalize(),
+                leave.reason
+            ])
+        return response
+
+    elif export_format == "xlsx":
+        import openpyxl
+        from openpyxl.utils import get_column_letter
+        from django.http import HttpResponse
+        from io import BytesIO
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Leave Report"
+
+        headers = ["Staff", "Email", "Leave Type", "Start Date", "End Date", "Status", "Reason"]
+        ws.append(headers)
+
+        for leave in leaves:
+            ws.append([
+                leave.staff.get_full_name,
+                leave.staff.email,
+                leave.leave_type,
+                leave.start_date,
+                leave.end_date,
+                leave.status.capitalize(),
+                leave.reason
+            ])
+
+        for i, col in enumerate(ws.columns, 1):
+            max_length = max(len(str(cell.value)) for cell in col)
+            ws.column_dimensions[get_column_letter(i)].width = max_length + 2
+
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        response = HttpResponse(
+            output,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response["Content-Disposition"] = 'attachment; filename="leave_report.xlsx"'
+        return response
+
+    else:
+        messages.error(request, "Invalid export format.")
+        return redirect("leave_report")
+
+
+from .models import Notification
+from django.core.paginator import Paginator
+
+@login_required
+def notifications_list(request):
+    notifications = Notification.objects.filter(recipient=request.user).order_by('-created_at')
+    paginator = Paginator(notifications, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Check if "Mark all as read" should display
+    show_mark_all = notifications.filter(is_read=False).count() > 6
+
+    context = {
+        "page_obj": page_obj,
+        "show_mark_all": show_mark_all,
+    }
+    return render(request, "notifications/list.html", context)
+
+
+@login_required
+def mark_notification_read(request, notification_id):
+    notification = Notification.objects.filter(id=notification_id, recipient=request.user).first()
+    if notification and not notification.is_read:
+        notification.is_read = True
+        notification.save()
+    return redirect('notifications_list')
+
+
+@login_required
+def mark_all_notifications_read(request):
+    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    return redirect('notifications_list')

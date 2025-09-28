@@ -171,62 +171,80 @@
     <span id="sidebarToggle">&#9776;</span>
 
     <!-- Sidebar -->
-    <aside id="sidebar">
-        <span id="sidebarClose">&times;</span>
-        <ul>
-            {% if user.is_authenticated %}
-                <li><strong>{{ user.username }}</strong></li>
-                {% if user.is_staff_user %}
-                    <li>
-                        <a href="{% url 'staff_dashboard' %}" class="{% if request.path == '/staff/dashboard/' %}active{% endif %}">
-                            <i class="fa-solid fa-chart-line"></i> Dashboard
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'attendance_history' %}" class="{% if request.path == '/staff/attendance/' %}active{% endif %}">
-                            <i class="fa-solid fa-calendar-check"></i> Attendance
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'my_leave_requests' %}" class="{% if request.path == '/staff/leaves/' %}active{% endif %}">
-                            <i class="fa-solid fa-plane-departure"></i> Leave Requests
-                        </a>
-                    </li>
-                {% elif user.is_admin_user %}
-                    <li>
-                        <a href="{% url 'admin_dashboard' %}" class="{% if request.path == '/admin/dashboard/' %}active{% endif %}">
-                            <i class="fa-solid fa-chart-pie"></i> Dashboard
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'manage_staff' %}" class="{% if request.path == '/admin/staff/' %}active{% endif %}">
-                            <i class="fa-solid fa-users"></i> Staff Management
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'leave_requests' %}" class="{% if request.path == '/admin/leaves/' %}active{% endif %}">
-                            <i class="fa-solid fa-clipboard-check"></i> Leave Approvals
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'attendance_reports' %}" class="{% if request.path == '/admin/reports/' %}active{% endif %}">
-                            <i class="fa-solid fa-file-lines"></i> Reports
-                        </a>
-                    </li>
-                {% endif %}
+<aside id="sidebar">
+    <span id="sidebarClose">&times;</span>
+    <ul>
+        {% if user.is_authenticated %}
+            <li><strong>StaffHub</strong></li>
+            
+            {% if user.is_staff_user %}
                 <li>
-                    <a href="{% url 'profile' %}" class="{% if request.path == '/profile/' %}active{% endif %}">
-                        <i class="fa-solid fa-user"></i> Profile
+                    <a href="{% url 'staff_dashboard' %}" class="{% if request.path == '/staff/dashboard/' %}active{% endif %}">
+                        <i class="fa-solid fa-gauge"></i> Dashboard
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'logout' %}" class="logout-link">
-                        <i class="fa-solid fa-right-from-bracket"></i> Logout
+                    <a href="{% url 'attendance_history' %}" class="{% if request.path == '/staff/attendance/' %}active{% endif %}">
+                        <i class="fa-solid fa-calendar-check"></i> Attendance
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'my_leave_requests' %}" class="{% if request.path == '/staff/leaves/' %}active{% endif %}">
+                        <i class="fa-solid fa-plane"></i> Leave Requests
+                    </a>
+                </li>
+
+            {% elif user.is_admin_user %}
+                <li>
+                    <a href="{% url 'admin_dashboard' %}" class="{% if request.path == '/admin/dashboard/' %}active{% endif %}">
+                        <i class="fa-solid fa-chart-line"></i> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'manage_staff' %}" class="{% if request.path == '/admin/staff/' %}active{% endif %}">
+                        <i class="fa-solid fa-users-cog"></i> Staff Management
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'leave_requests' %}" class="{% if request.path == '/admin/leaves/' %}active{% endif %}">
+                        <i class="fa-solid fa-clipboard-list"></i> Leave Approvals
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'leave_report' %}" class="{% if request.path == '/admin/leaves/report/' %}active{% endif %}">
+                        <i class="fa-solid fa-chart-simple"></i> Leave Reports
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'attendance_report' %}" class="{% if request.path == '/admin/reports/' %}active{% endif %}">
+                        <i class="fa-solid fa-file-invoice"></i> Attendance Reports
                     </a>
                 </li>
             {% endif %}
-        </ul>
-    </aside>
+
+            <li>
+                <a href="{% url 'notifications_list' %}" class="{% if request.path == '/notifications/' %}active{% endif %}">
+                    <i class="fa-solid fa-bell"></i> Notifications
+                    {% if unread_notifications_count %}
+                        <span class="badge bg-danger">{{ unread_notifications_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'profile' %}" class="{% if request.path == '/profile/' %}active{% endif %}">
+                    <i class="fa-solid fa-user"></i> Profile
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'logout' %}" class="logout-link">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</aside>
+
 
     <!-- Overlay for mobile -->
     <div id="sidebar-overlay"></div>

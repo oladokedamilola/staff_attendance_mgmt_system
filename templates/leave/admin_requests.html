@@ -1,142 +1,187 @@
 {% extends "base_user.html" %}
-{% block title %}Leave Requests Management - StaffHub{% endblock %}
+{% load static %}
+{% block title %}Leave Reports Management{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-5">
-  <h2 class="mb-4">Manage Leave Requests</h2>
+<div class="container-fluid py-4 mt-4">
+    <h2 class="mb-4">Leave Reports</h2>
 
-  <!-- Filters -->
-  <form method="get" class="row g-3 mb-4">
-    <div class="col-md-3">
-      <input type="text" name="staff" class="form-control" placeholder="Search staff..." value="{{ request.GET.staff }}">
-    </div>
-    <div class="col-md-3">
-      <input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date }}">
-    </div>
-    <div class="col-md-3">
-      <input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date }}">
-    </div>
-    <div class="col-md-3 d-flex">
-      <select name="status" class="form-select me-2">
-        <option value="">All Status</option>
-        <option value="Pending" {% if request.GET.status == "Pending" %}selected{% endif %}>Pending</option>
-        <option value="Approved" {% if request.GET.status == "Approved" %}selected{% endif %}>Approved</option>
-        <option value="Rejected" {% if request.GET.status == "Rejected" %}selected{% endif %}>Rejected</option>
-      </select>
-      <button type="submit" class="btn btn-outline-primary flex-fill">Filter</button>
-    </div>
-  </form>
+    <!-- Filter Form -->
+    <form method="get" class="row g-3 mb-4 align-items-end">
+        <!-- Dropdown -->
+        <div class="col-md-3">
+            <label for="staff" class="form-label">Staff (Select Email)</label>
+            <select name="staff" id="staff" class="form-select">
+                <option value="">All Staff</option>
+                {% for s in staff_list %}
+                    <option value="{{ s.email }}" {% if request.GET.staff == s.email %}selected{% endif %}>
+                        {{ s.get_full_name }} ({{ s.email }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
 
-  <!-- Leave Status Distribution Chart -->
-  <div class="card shadow-sm rounded-4 border-0 mb-4">
-    <div class="card-body">
-      <h5 class="fw-bold mb-3">Leave Requests Overview</h5>
-      <div class="chart-container" style="height: 300px;">
-        <canvas id="leaveRequestsChart"></canvas>
-      </div>
-    </div>
-  </div>
+        <!-- Quick Search -->
+        <div class="col-md-3">
+            <label for="staff_search" class="form-label">Quick Search by Email</label>
+            <input type="text" id="staff_search" name="staff" placeholder="Enter staff email"
+                   value="{{ request.GET.staff }}" class="form-control">
+        </div>
 
-  <!-- Leave Requests Table -->
-  <div class="card shadow-sm rounded-4 border-0">
-    <div class="card-body">
-      <h5 class="fw-bold mb-3">All Leave Requests</h5>
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th><i class="bi bi-person me-1"></i> Staff</th>
-              <th><i class="bi bi-list-task me-1"></i> Type</th>
-              <th><i class="bi bi-calendar-range me-1"></i> Dates</th>
-              <th><i class="bi bi-chat-left-text me-1"></i> Reason</th>
-              <th><i class="bi bi-flag me-1"></i> Status</th>
-              <th><i class="bi bi-clock-history me-1"></i> Requested On</th>
-              <th><i class="bi bi-gear me-1"></i> Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for leave in leave_requests %}
-            <tr>
-              <td>{{ leave.staff.username }}</td>
-              <td>{{ leave.leave_type }}</td>
-              <td>{{ leave.start_date }} → {{ leave.end_date }}</td>
-              <td>{{ leave.reason }}</td>
-              <td>
-                {% if leave.status == "Pending" %}
-                  <span class="badge bg-warning text-dark">Pending</span>
-                {% elif leave.status == "Approved" %}
-                  <span class="badge bg-success">Approved</span>
-                {% elif leave.status == "Rejected" %}
-                  <span class="badge bg-danger">Rejected</span>
-                {% endif %}
-              </td>
-              <td>{{ leave.created_at|date:"M d, Y H:i" }}</td>
-              <td>
-                {% if leave.status == "Pending" %}
-                  <a href="{% url 'leave:approve' leave.id %}" class="btn btn-sm btn-outline-success me-1" title="Approve">
-                    <i class="bi bi-check2"></i>
-                  </a>
-                  <a href="{% url 'leave:reject' leave.id %}" class="btn btn-sm btn-outline-danger" title="Reject">
-                    <i class="bi bi-x"></i>
-                  </a>
-                {% else %}
-                  <span class="text-muted small">No action</span>
-                {% endif %}
-              </td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="7" class="text-center text-muted py-4">No leave requests found.</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+        <!-- Start Date -->
+        <div class="col-md-2">
+            <label for="start_date" class="form-label">Start Date</label>
+            <input type="date" id="start_date" name="start_date" value="{{ request.GET.start_date }}" class="form-control">
+        </div>
+
+        <!-- End Date -->
+        <div class="col-md-2">
+            <label for="end_date" class="form-label">End Date</label>
+            <input type="date" id="end_date" name="end_date" value="{{ request.GET.end_date }}" class="form-control">
+        </div>
+
+        <!-- Status Filter -->
+        <div class="col-md-2">
+            <label for="status" class="form-label">Status</label>
+            <select name="status" id="status" class="form-select">
+                <option value="">All</option>
+                <option value="Pending" {% if request.GET.status == "Pending" %}selected{% endif %}>Pending</option>
+                <option value="Approved" {% if request.GET.status == "Approved" %}selected{% endif %}>Approved</option>
+                <option value="Rejected" {% if request.GET.status == "Rejected" %}selected{% endif %}>Rejected</option>
+            </select>
+        </div>
+
+        <!-- Action Buttons + Export -->
+        <div class="col-md-12 d-flex justify-content-between mt-3">
+            <div>
+                <button type="submit" class="btn btn-primary me-2">Apply</button>
+                <a href="{% url 'leave_report' %}" class="btn btn-secondary">Reset</a>
+            </div>
+            <div>
+                <a href="{% url 'leave_export' 'csv' %}?{{ request.GET.urlencode }}" class="btn btn-outline-success me-2">
+                    Export CSV
+                </a>
+                <a href="{% url 'leave_export' 'xlsx' %}?{{ request.GET.urlencode }}" class="btn btn-outline-success">
+                    Export Excel
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Chart -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">Leave Requests Trend</div>
+                <div class="card-body chart-container">
+                    <canvas id="leaveRequestsChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
+
+    <!-- Table -->
+    <div class="card shadow-sm">
+        <div class="card-header">All Leave Requests</div>
+        <div class="card-body table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Staff</th>
+                        <th>Email</th>
+                        <th>Leave Type</th>
+                        <th>Dates</th>
+                        <th>Status</th>
+                        <th>Reason</th>
+                        <th>Requested On</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in leave_requests %}
+                        <tr>
+                            <td>{{ leave.staff.get_full_name }}</td>
+                            <td>{{ leave.staff.email }}</td>
+                            <td>{{ leave.leave_type }}</td>
+                            <td>{{ leave.start_date }} → {{ leave.end_date }}</td>
+                            <td>
+                                {% if leave.status == "Pending" %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                {% elif leave.status == "Approved" %}
+                                    <span class="badge bg-success">Approved</span>
+                                {% elif leave.status == "Rejected" %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ leave.reason }}</td>
+                            <td>{{ leave.created_at|date:"M d, Y H:i" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">No leave requests found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
+
+<!-- Chart Styling -->
+<style>
+    .chart-container {
+        height: 400px; 
+    }
+    .chart-container canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+</style>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const ctx = document.getElementById("leaveRequestsChart").getContext("2d");
-
-  const statusLabels = ["Pending", "Approved", "Rejected"];
-  const statusCounts = [
-    {{ pending_count|default:0 }},
-    {{ approved_count|default:0 }},
-    {{ rejected_count|default:0 }},
-  ];
-
-  new Chart(ctx, {
-    type: "pie",
-    data: {
-      labels: statusLabels,
-      datasets: [{
-        label: "Leave Requests",
-        data: statusCounts,
-        backgroundColor: [
-          "rgba(255, 193, 7, 0.7)",   // Pending (yellow)
-          "rgba(40, 167, 69, 0.7)",   // Approved (green)
-          "rgba(220, 53, 69, 0.7)"    // Rejected (red)
-        ],
-        borderColor: [
-          "rgba(255, 193, 7, 1)",
-          "rgba(40, 167, 69, 1)",
-          "rgba(220, 53, 69, 1)"
-        ],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: "bottom" }
-      }
-    }
-  });
+    const ctx = document.getElementById("leaveRequestsChart");
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: {{ chart_labels|safe }}, // e.g. dates list from backend
+            datasets: [
+                {
+                    label: "Pending",
+                    data: {{ pending_trend|safe }},
+                    borderColor: "#ffc107",
+                    backgroundColor: "rgba(255,193,7,0.2)",
+                    tension: 0.4,
+                },
+                {
+                    label: "Approved",
+                    data: {{ approved_trend|safe }},
+                    borderColor: "#28a745",
+                    backgroundColor: "rgba(40,167,69,0.2)",
+                    tension: 0.4,
+                },
+                {
+                    label: "Rejected",
+                    data: {{ rejected_trend|safe }},
+                    borderColor: "#dc3545",
+                    backgroundColor: "rgba(220,53,69,0.2)",
+                    tension: 0.4,
+                },
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                legend: { position: "bottom" }
+            },
+            scales: {
+                x: { title: { display: true, text: "Date" } },
+                y: { title: { display: true, text: "Requests" }, beginAtZero: true }
+            }
+        }
+    });
 });
 </script>
 {% endblock %}

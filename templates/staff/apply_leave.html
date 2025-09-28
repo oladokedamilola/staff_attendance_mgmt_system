@@ -11,18 +11,14 @@
     </div>
     <div class="card-body">
 
-      <form method="post" novalidate>
+      <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
-
-        <!-- Non-field errors -->
-        {% if form.non_field_errors %}
-          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
-        {% endif %}
+        {{ form.non_field_errors }}
 
         <!-- Leave Type -->
         <div class="mb-3">
           <label for="{{ form.leave_type.id_for_label }}" class="form-label">
-            <i class="bi bi-list-task me-1 text-muted"></i> {{ form.leave_type.label }}
+            <i class="bi bi-list-task me-1 text-muted"></i> Leave Type
           </label>
           {{ form.leave_type }}
           {% for error in form.leave_type.errors %}
@@ -33,7 +29,7 @@
         <!-- Start Date -->
         <div class="mb-3">
           <label for="{{ form.start_date.id_for_label }}" class="form-label">
-            <i class="bi bi-calendar-event me-1 text-muted"></i> {{ form.start_date.label }}
+            <i class="bi bi-calendar-event me-1 text-muted"></i> Start Date
           </label>
           {{ form.start_date }}
           {% for error in form.start_date.errors %}
@@ -44,7 +40,7 @@
         <!-- End Date -->
         <div class="mb-3">
           <label for="{{ form.end_date.id_for_label }}" class="form-label">
-            <i class="bi bi-calendar-check me-1 text-muted"></i> {{ form.end_date.label }}
+            <i class="bi bi-calendar-check me-1 text-muted"></i> End Date
           </label>
           {{ form.end_date }}
           {% for error in form.end_date.errors %}
@@ -55,10 +51,22 @@
         <!-- Reason -->
         <div class="mb-3">
           <label for="{{ form.reason.id_for_label }}" class="form-label">
-            <i class="bi bi-chat-left-text me-1 text-muted"></i> {{ form.reason.label }}
+            <i class="bi bi-chat-left-text me-1 text-muted"></i> Reason
           </label>
           {{ form.reason }}
           {% for error in form.reason.errors %}
+            <div class="invalid-feedback d-block">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <!-- Evidence (hidden until Sick Leave selected) -->
+        <div class="mb-3" id="evidenceField" style="display:none;">
+          <label for="{{ form.evidence.id_for_label }}" class="form-label">
+            <i class="bi bi-file-earmark-text me-1 text-muted"></i> Evidence File
+          </label>
+          {{ form.evidence }}
+          <small class="form-text text-muted">Required for Sick Leave (document or image).</small>
+          {% for error in form.evidence.errors %}
             <div class="invalid-feedback d-block">{{ error }}</div>
           {% endfor %}
         </div>
@@ -72,4 +80,23 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const leaveType = document.getElementById("id_leave_type");
+    const evidenceField = document.getElementById("evidenceField");
+
+    function toggleEvidence() {
+      if (leaveType.value === "sick") {
+        evidenceField.style.display = "block";
+      } else {
+        evidenceField.style.display = "none";
+      }
+    }
+
+    // Run on page load + when leave type changes
+    toggleEvidence();
+    leaveType.addEventListener("change", toggleEvidence);
+  });
+</script>
 {% endblock %}

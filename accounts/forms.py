@@ -23,18 +23,14 @@ class LoginForm(forms.Form):
 
 class ProfileUpdateForm(forms.ModelForm):
     """Form for users to update their profile details."""
-    
+
     class Meta:
         model = User
-        fields = ["username", "email", "first_name", "last_name"]
+        fields = ["email", "first_name", "last_name", "profile_image"]
         widgets = {
-            "username": forms.TextInput(attrs={
-                "class": "form-control",
-                "placeholder": "Enter username"
-            }),
             "email": forms.EmailInput(attrs={
                 "class": "form-control",
-                "placeholder": "Enter email address"
+                "readonly": "readonly",  # non-editable but visible
             }),
             "first_name": forms.TextInput(attrs={
                 "class": "form-control",
@@ -44,20 +40,17 @@ class ProfileUpdateForm(forms.ModelForm):
                 "class": "form-control",
                 "placeholder": "Last name"
             }),
+            "profile_image": forms.ClearableFileInput(attrs={
+                "class": "form-control d-none",
+                "accept": "image/*",
+                "onchange": "previewImage(event)"
+            }),
         }
 
 
 
-# accounts/forms.py
-from django import forms
-from django.contrib.auth.forms import UserCreationForm
 from .models import User
-
-from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from accounts.models import User, StaffInvitation
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
 
 class StaffRegisterForm(UserCreationForm):
     first_name = forms.CharField(max_length=150, required=True, widget=forms.TextInput(attrs={

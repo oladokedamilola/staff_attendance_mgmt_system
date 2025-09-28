@@ -1,4 +1,5 @@
 {% extends "base_user.html" %}
+{% load static %}
 
 {% block title %}Manage Staff{% endblock %}
 
@@ -9,7 +10,7 @@
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-striped table-hover mb-0">
+                <table class="table table-striped table-hover mb-0 align-middle">
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -23,11 +24,58 @@
                             <td>{{ staff.get_full_name }}</td>
                             <td>{{ staff.email }}</td>
                             <td class="text-end">
-                                <a href="{% url 'edit_staff' staff.id %}" class="btn btn-sm btn-primary">
-                                    Edit
-                                </a>
+                                <button 
+                                    class="btn btn-sm btn-outline-primary" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#viewStaffModal{{ staff.id }}">
+                                    <i class="bi bi-eye"></i> View
+                                </button>
                             </td>
                         </tr>
+
+                        <!-- Modal -->
+                        <div class="modal fade" id="viewStaffModal{{ staff.id }}" tabindex="-1" aria-labelledby="viewStaffModalLabel{{ staff.id }}" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content rounded-4 shadow-lg">
+                              <div class="modal-header bg-light">
+                                <h5 class="modal-title" id="viewStaffModalLabel{{ staff.id }}">
+                                  Staff Details
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="row g-4">
+                                  <!-- Profile Image -->
+                                  <div class="col-md-4 text-center">
+                                    {% if staff.profile_image %}
+                                      <img src="{{ staff.profile_image.url }}" alt="Profile Image" class="img-fluid rounded-circle shadow-sm" style="max-width: 150px;">
+                                    {% else %}
+                                      <img src="{% static 'profile_images/default-avatar.png' %}" alt="Default Avatar" class="img-fluid rounded-circle shadow-sm" style="max-width: 150px;">
+                                    {% endif %}
+                                  </div>
+
+                                  <!-- Staff Info -->
+                                  <div class="col-md-8">
+                                    <ul class="list-group list-group-flush">
+                                      <li class="list-group-item"><strong>Full Name:</strong> {{ staff.get_full_name }}</li>
+                                      <li class="list-group-item"><strong>Email:</strong> {{ staff.email }}</li>
+                                      <li class="list-group-item"><strong>Role:</strong> {{ staff.get_role_display }}</li>
+                                      <li class="list-group-item"><strong>Date Joined:</strong> {{ staff.date_joined|date:"M d, Y" }}</li>
+                                      <li class="list-group-item"><strong>Last Login:</strong> {{ staff.last_login|date:"M d, Y H:i" }}</li>
+                                    </ul>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="modal-footer bg-light">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                  Close
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- End Modal -->
+
                         {% empty %}
                         <tr>
                             <td colspan="3" class="text-center text-muted py-4">
@@ -41,4 +89,7 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block footer %}
 {% endblock %}

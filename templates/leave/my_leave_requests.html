@@ -1,0 +1,86 @@
+{% extends "base_user.html" %}
+{% block title %}My Leave Requests - StaffHub{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5">
+  <h2 class="mb-4">My Leave Requests</h2>
+
+  <!-- Summary Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card text-center shadow-sm border-0">
+        <div class="card-body">
+          <h6 class="card-title">Total</h6>
+          <p class="fw-bold fs-4 text-primary">{{ total_requests }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center shadow-sm border-0">
+        <div class="card-body">
+          <h6 class="card-title">Approved</h6>
+          <p class="fw-bold fs-4 text-success">{{ approved_count }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center shadow-sm border-0">
+        <div class="card-body">
+          <h6 class="card-title">Pending</h6>
+          <p class="fw-bold fs-4 text-warning">{{ pending_count }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center shadow-sm border-0">
+        <div class="card-body">
+          <h6 class="card-title">Rejected</h6>
+          <p class="fw-bold fs-4 text-danger">{{ rejected_count }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leave Requests Table -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Leave Type</th>
+              <th>Period</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Applied At</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for leave in leaves %}
+            <tr>
+              <td>{{ leave.get_leave_type_display }}</td>
+              <td>{{ leave.start_date }} → {{ leave.end_date }}</td>
+              <td>{{ leave.reason|truncatechars:40 }}</td>
+              <td>
+                {% if leave.status == "approved" %}
+                  <span class="badge bg-success">Approved</span>
+                {% elif leave.status == "pending" %}
+                  <span class="badge bg-warning text-dark">Pending</span>
+                {% else %}
+                  <span class="badge bg-danger">Rejected</span>
+                {% endif %}
+              </td>
+              <td>{{ leave.applied_at|date:"M d, Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">No leave requests found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

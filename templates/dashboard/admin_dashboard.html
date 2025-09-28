@@ -1,4 +1,5 @@
 {% extends "base_user.html" %}
+{% load static %}
 {% block title %}Admin Dashboard - StaffHub{% endblock %}
 
 {% block content %}
@@ -12,15 +13,22 @@
         
         <!-- Profile Image -->
         <div class="flex-shrink-0 me-4">
-          <img src="{{ user.profile.image.url|default:'/static/images/default-avatar.png' }}" 
-               alt="Profile Image" 
-               class="rounded-circle shadow-sm" 
-               style="width: 100px; height: 100px; object-fit: cover;">
+          {% if user.profile_image %}
+            <img src="{{ user.profile_image.url }}"
+                alt="Profile Image"
+                class="rounded-circle shadow-sm"
+                style="width: 100px; height: 100px; object-fit: cover;">
+          {% else %}
+            <img src="{% static 'images/default-avatar.jpg' %}"
+                alt="Default Avatar"
+                class="rounded-circle shadow-sm"
+                style="width: 100px; height: 100px; object-fit: cover;">
+          {% endif %}
         </div>
 
         <!-- User Details -->
         <div class="flex-grow-1">
-          <h5 class="fw-bold mb-1">{{ user.get_full_name|default:user.username }}</h5>
+          <h5 class="fw-bold mb-1">{{ user.get_full_name|default:user.first_name }}</h5>
           <p class="text-muted mb-2">{{ user.email }}</p>
 
           <div class="row text-muted small">
@@ -42,45 +50,49 @@
     </div>
   </div>
 
-  <!-- Summary Cards -->
-  <div class="row g-4">
-    <div class="col-md-3">
-      <div class="card shadow-sm rounded-4 border-0">
-        <div class="card-body text-center">
-          <div class="text-muted"><i class="bi bi-people fs-4"></i></div>
-          <h5 class="card-title text-muted">Total Staff</h5>
-          <h3 class="fw-bold text-success">{{ total_staff }}</h3>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card shadow-sm rounded-4 border-0">
-        <div class="card-body text-center">
-          <div class="text-muted"><i class="bi bi-person-check fs-4"></i></div>
-          <h5 class="card-title text-muted">Present Today</h5>
-          <h3 class="fw-bold text-primary">{{ present_today }}</h3>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card shadow-sm rounded-4 border-0">
-        <div class="card-body text-center">
-          <div class="text-muted"><i class="bi bi-person-x fs-4"></i></div>
-          <h5 class="card-title text-muted">Absent Today</h5>
-          <h3 class="fw-bold text-danger">{{ absent_today }}</h3>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card shadow-sm rounded-4 border-0">
-        <div class="card-body text-center">
-          <div class="text-muted"><i class="bi bi-hourglass-split fs-4"></i></div>
-          <h5 class="card-title text-muted">Pending Leaves</h5>
-          <h3 class="fw-bold text-warning">{{ pending_leaves }}</h3>
-        </div>
-      </div>
+ <!-- Summary Cards -->
+<div class="d-flex justify-content-center flex-wrap gap-3 mb-4">
+  <div class="card shadow-sm rounded-4 border-0" style="min-width: 180px;">
+    <div class="card-body text-center">
+      <div class="text-muted"><i class="bi bi-people fs-3"></i></div>
+      <h6 class="card-title text-muted mt-2">Total Staff</h6>
+      <h4 class="fw-bold text-success">{{ total_staff }}</h4>
     </div>
   </div>
+
+  <div class="card shadow-sm rounded-4 border-0" style="min-width: 180px;">
+    <div class="card-body text-center">
+      <div class="text-muted"><i class="bi bi-person-check fs-3"></i></div>
+      <h6 class="card-title text-muted mt-2">Present Today</h6>
+      <h4 class="fw-bold text-primary">{{ present_today }}</h4>
+    </div>
+  </div>
+
+  <div class="card shadow-sm rounded-4 border-0" style="min-width: 180px;">
+    <div class="card-body text-center">
+      <div class="text-muted"><i class="bi bi-person-x fs-3"></i></div>
+      <h6 class="card-title text-muted mt-2">Absent Today</h6>
+      <h4 class="fw-bold text-danger">{{ absent_today }}</h4>
+    </div>
+  </div>
+
+  <div class="card shadow-sm rounded-4 border-0" style="min-width: 180px;">
+    <div class="card-body text-center">
+      <div class="text-muted"><i class="bi bi-alarm fs-3"></i></div>
+      <h6 class="card-title text-muted mt-2">Late Today</h6>
+      <h4 class="fw-bold text-warning">{{ late_today }}</h4>
+    </div>
+  </div>
+
+  <div class="card shadow-sm rounded-4 border-0" style="min-width: 180px;">
+    <div class="card-body text-center">
+      <div class="text-muted"><i class="bi bi-hourglass-split fs-3"></i></div>
+      <h6 class="card-title text-muted mt-2">Pending Leaves</h6>
+      <h4 class="fw-bold text-info">{{ pending_leaves }}</h4>
+    </div>
+  </div>
+</div>
+
 
   <!-- Quick Actions -->
   <div class="row g-4 mt-4">
@@ -90,12 +102,12 @@
       </a>
     </div>
     <div class="col-md-3">
-      <a href="#" class="btn btn-success w-100 py-3 rounded-4 shadow-sm">
+      <a href="{% url 'leave_requests' %}" class="btn btn-success w-100 py-3 rounded-4 shadow-sm">
         <i class="bi bi-check2-square me-2"></i> Approve Leaves
       </a>
     </div>
     <div class="col-md-3">
-      <a href="{% url 'manage_attendance' %}" class="btn btn-info w-100 py-3 rounded-4 shadow-sm">
+      <a href="{% url 'attendance_report' %}" class="btn btn-info w-100 py-3 rounded-4 shadow-sm">
         <i class="bi bi-bar-chart-line me-2"></i> Attendance Report
       </a>
     </div>
@@ -109,7 +121,7 @@
   <!-- Attendance Overview -->
   <div class="card shadow-sm rounded-4 border-0 mt-5">
     <div class="card-body">
-      <h5 class="fw-bold mb-3">Attendance Overview</h5>
+      <h5 class="fw-bold mb-3">Attendance Overview (Last 7 Days)</h5>
       <div class="chart-container" style="height: 300px;">
         <canvas id="attendanceChart"></canvas>
       </div>
@@ -133,13 +145,13 @@
           <tbody>
             {% for leave in recent_leaves %}
             <tr>
-              <td>{{ leave.staff.username }}</td>
+              <td>{{ leave.staff.get_full_name }}</td>
               <td>{{ leave.leave_type }}</td>
               <td>{{ leave.start_date }} - {{ leave.end_date }}</td>
               <td>
-                {% if leave.status == "Pending" %}
+                {% if leave.status == "pending" %}
                   <span class="badge bg-warning text-dark">Pending</span>
-                {% elif leave.status == "Approved" %}
+                {% elif leave.status == "approved" %}
                   <span class="badge bg-success">Approved</span>
                 {% else %}
                   <span class="badge bg-danger">Rejected</span>
@@ -170,7 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
     data: {
       labels: {{ chart_labels|safe }},
       datasets: [{
-        label: "Attendance %",
+        label: "Attendance % (Present)",
         data: {{ chart_data|safe }},
         borderColor: "#28a745",
         backgroundColor: "rgba(40, 167, 69, 0.2)",
@@ -187,4 +199,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
+{% endblock %}
+
+{% block footer %}
+<footer class="footer mt-auto py-4 bg-dark text-light">
+  <div class="container text-center">
+    <small>&copy; {{ current_year }} StaffHub. All rights reserved.</small>
+  </div>
+</footer>
 {% endblock %}

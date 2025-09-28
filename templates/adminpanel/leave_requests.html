@@ -1,5 +1,4 @@
 {% extends "base_user.html" %}
-
 {% block title %}Leave Requests{% endblock %}
 
 {% block content %}
@@ -23,22 +22,58 @@
                         {% for leave in pending_leaves %}
                         <tr>
                             <td>{{ leave.staff.get_full_name }}</td>
-                            <td>{{ leave.leave_type }}</td>
+                            <td>{{ leave.get_leave_type_display }}</td>
                             <td>{{ leave.start_date }} → {{ leave.end_date }}</td>
-                            <td>{{ leave.reason }}</td>
+                            <td>{{ leave.reason|truncatechars:30 }}</td>
                             <td>
-                                <form method="post" class="d-inline">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="leave_id" value="{{ leave.id }}">
-                                    <button type="submit" name="action" value="approve" class="btn btn-sm btn-primary">
-                                        Approve
-                                    </button>
-                                    <button type="submit" name="action" value="reject" class="btn btn-sm btn-accent">
-                                        Reject
-                                    </button>
-                                </form>
+                                <!-- View button triggers modal -->
+                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#leaveModal{{ leave.id }}">
+                                    <i class="bi bi-eye me-1"></i> View
+                                </button>
                             </td>
                         </tr>
+
+                        <!-- Modal for Leave -->
+                        <div class="modal fade" id="leaveModal{{ leave.id }}" tabindex="-1" aria-labelledby="leaveModalLabel{{ leave.id }}" aria-hidden="true">
+                          <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="leaveModalLabel{{ leave.id }}">Leave Application</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <p><strong>Staff:</strong> {{ leave.staff.get_full_name }} ({{ leave.staff.email }})</p>
+                                <p><strong>Leave Type:</strong> {{ leave.get_leave_type_display }}</p>
+                                <p><strong>Start Date:</strong> {{ leave.start_date }}</p>
+                                <p><strong>End Date:</strong> {{ leave.end_date }}</p>
+                                <p><strong>Reason:</strong><br> {{ leave.reason }}</p>
+
+                                {% if leave.evidence %}
+                                  <p><strong>Evidence:</strong></p>
+                                  {% if leave.evidence.url|lower|slice:"-4:" in ".jpg,.png,.gif" %}
+                                    <img src="{{ leave.evidence.url }}" alt="Evidence" class="img-fluid rounded mb-3">
+                                  {% else %}
+                                    <a href="{{ leave.evidence.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                      <i class="bi bi-file-earmark-text"></i> View Document
+                                    </a>
+                                  {% endif %}
+                                {% endif %}
+                              </div>
+                              <div class="modal-footer">
+                                <form method="post" class="d-inline">
+                                  {% csrf_token %}
+                                  <input type="hidden" name="leave_id" value="{{ leave.id }}">
+                                  <button type="submit" name="action" value="approve" class="btn btn-success">
+                                    <i class="bi bi-check2-circle"></i> Approve
+                                  </button>
+                                  <button type="submit" name="action" value="reject" class="btn btn-danger">
+                                    <i class="bi bi-x-circle"></i> Reject
+                                  </button>
+                                </form>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                         {% empty %}
                         <tr>
                             <td colspan="5" class="text-center text-muted py-4">
@@ -52,4 +87,7 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block footer %}
 {% endblock %}
