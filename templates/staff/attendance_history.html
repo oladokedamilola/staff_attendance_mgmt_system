@@ -6,6 +6,12 @@
 <div class="container-fluid py-5">
   <h2 class="mb-4">My Attendance History</h2>
 
+  <!-- Attendance Trend Chart -->
+  <div class="card shadow-sm rounded-4 border-0 mb-4 p-4">
+    <h5 class="fw-bold mb-3">Attendance Trend (Last 30 Days)</h5>
+    <canvas id="attendanceHistoryChart" height="300"></canvas>
+  </div>
+
   <!-- Summary Cards -->
   <div class="row mb-4">
     <div class="col-md-4">
@@ -76,7 +82,68 @@
     </div>
   </div>
 </div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctxHistory = document.getElementById('attendanceHistoryChart').getContext('2d');
+
+  // Use fallback arrays if context variables are empty or undefined
+  const labels = {{ trend_labels|default:"['Day 1']"|safe }};
+  const presentData = {{ trend_present|default:"[0]"|safe }};
+  const absentData = {{ trend_absent|default:"[0]"|safe }};
+  const lateData = {{ trend_late|default:"[0]"|safe }};
+
+  const attendanceHistoryChart = new Chart(ctxHistory, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Present',
+          data: presentData,
+          fill: false,
+          borderColor: 'rgba(25, 135, 84, 1)',
+          tension: 0.3
+        },
+        {
+          label: 'Absent',
+          data: absentData,
+          fill: false,
+          borderColor: 'rgba(220,53,69,1)',
+          tension: 0.3
+        },
+        {
+          label: 'Late',
+          data: lateData,
+          fill: false,
+          borderColor: 'rgba(255,193,7,1)',
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Day' },
+          grid: { drawTicks: true, color: '#e9ecef' }
+        },
+        y: {
+          beginAtZero: true,
+          precision: 0,
+          title: { display: true, text: 'Number of Days' },
+          grid: { drawTicks: true, color: '#e9ecef' }
+        }
+      }
+    }
+  });
+</script>
+
+
 {% endblock %}
 
-{% block footer %}
-{% endblock %}
+{% block footer %}{% endblock %}

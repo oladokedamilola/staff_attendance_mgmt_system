@@ -5,6 +5,12 @@
 <div class="container-fluid py-5">
   <h2 class="mb-4">My Leave Requests</h2>
 
+  <!-- Leave Summary Chart -->
+  <div class="card shadow-sm rounded-4 border-0 mb-4 p-4">
+    <h5 class="fw-bold mb-3">Leave Requests Overview</h5>
+    <canvas id="leaveRequestsChart" height="300"></canvas>
+  </div>
+
   <!-- Summary Cards -->
   <div class="row mb-4">
     <div class="col-md-3">
@@ -83,4 +89,31 @@
     </div>
   </div>
 </div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctxLeaveRequests = document.getElementById('leaveRequestsChart').getContext('2d');
+  const leaveRequestsChart = new Chart(ctxLeaveRequests, {
+    type: 'bar',
+    data: {
+      labels: ['Approved', 'Pending', 'Rejected'],
+      datasets: [{
+        label: 'Leaves',
+        data: [{{ approved_count }}, {{ pending_count }}, {{ rejected_count }}],
+        backgroundColor: [
+          'rgba(25, 135, 84, 0.7)',
+          'rgba(255,193,7,0.7)',
+          'rgba(220,53,69,0.7)'
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, precision:0 } }
+    }
+  });
+</script>
+
 {% endblock %}

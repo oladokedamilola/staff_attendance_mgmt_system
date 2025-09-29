@@ -10,6 +10,9 @@ from leave.models import Leave
 from datetime import date
 from django.utils.timezone import now
 
+from datetime import timedelta
+from django.utils import timezone
+
 @login_required
 def staff_dashboard(request):
     """Staff dashboard showing attendance & leave summaries."""
@@ -17,7 +20,7 @@ def staff_dashboard(request):
         messages.error(request, "Access denied. Staff account required.")
         return redirect("login")
 
-    today = date.today()
+    today = timezone.now().date()
     records = Attendance.objects.filter(staff=request.user)
 
     # Attendance summary
@@ -27,8 +30,8 @@ def staff_dashboard(request):
     late_count = records.filter(status="late").count()
 
     # Monthly stats
-    this_month = now().month
-    this_year = now().year
+    this_month = today.month
+    this_year = today.year
     month_records = records.filter(date__month=this_month, date__year=this_year)
     days_present = month_records.filter(status="present").count()
     total_days = month_records.count()
@@ -43,7 +46,21 @@ def staff_dashboard(request):
     # Check if today is already marked
     today_record = records.filter(date=today).first()
 
-    # Recent activity
+    # Build attendance trend for last 7 days
+    trend_labels = []
+    trend_present = []
+    trend_late = []
+    trend_absent = []
+
+    for i in range(6, -1, -1):  # last 7 days
+        day = today - timedelta(days=i)
+        trend_labels.append(day.strftime("%a"))  # Mon, Tue, ...
+        day_records = records.filter(date=day)
+        trend_present.append(day_records.filter(status="present").count())
+        trend_late.append(day_records.filter(status="late").count())
+        trend_absent.append(day_records.filter(status="absent").count())
+
+    # Recent activity (last 5 records)
     recent_attendance = records.order_by("-date")[:5]
 
     context = {
@@ -58,12 +75,20 @@ def staff_dashboard(request):
         "approved_leaves": approved_leaves,
         "pending_leaves": pending_leaves,
         "rejected_leaves": rejected_leaves,
-        "recent_attendance": recent_attendance,
         "today_record": today_record,
+        "recent_attendance": recent_attendance,
+        "trend_labels": trend_labels,
+        "trend_present": trend_present,
+        "trend_late": trend_late,
+        "trend_absent": trend_absent,
     }
     return render(request, "dashboard/staff_dashboard.html", context)
 
 
+
+
+from django.utils import timezone
+from datetime import timedelta
 
 @login_required
 def attendance_history(request):
@@ -72,12 +97,29 @@ def attendance_history(request):
         messages.error(request, "Access denied. Staff account required.")
         return redirect("login")
 
+    # Get all records for this staff
     records = Attendance.objects.filter(staff=request.user).order_by("-date")
 
     # Summary counts
     present_count = records.filter(status="present").count()
     late_count = records.filter(status="late").count()
     absent_count = records.filter(status="absent").count()
+
+    # Build trend data for last 30 days
+    today = timezone.now().date()
+    trend_labels = []
+    trend_present = []
+    trend_late = []
+    trend_absent = []
+
+    for i in range(29, -1, -1):  # last 30 days
+        day = today - timedelta(days=i)
+        trend_labels.append(day.strftime("%b %d"))  # e.g., "Sep 29"
+
+        day_records = records.filter(date=day)
+        trend_present.append(day_records.filter(status="present").count())
+        trend_late.append(day_records.filter(status="late").count())
+        trend_absent.append(day_records.filter(status="absent").count())
 
     if not records.exists():
         messages.info(request, "No attendance records found yet.")
@@ -87,8 +129,13 @@ def attendance_history(request):
         "present_count": present_count,
         "late_count": late_count,
         "absent_count": absent_count,
+        "trend_labels": trend_labels,
+        "trend_present": trend_present,
+        "trend_late": trend_late,
+        "trend_absent": trend_absent,
     }
     return render(request, "staff/attendance_history.html", context)
+
 
 
 

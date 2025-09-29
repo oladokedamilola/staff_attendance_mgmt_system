@@ -206,6 +206,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{% url 'send_staff_invite' %}" class="{% if request.path == '/admin/send-invite/' %}active{% endif %}">
+                        <i class="bi bi-person-plus"></i> Staff Invitation
+                    </a>
+                </li>
+                <li>
                     <a href="{% url 'leave_requests' %}" class="{% if request.path == '/admin/leaves/' %}active{% endif %}">
                         <i class="fa-solid fa-clipboard-list"></i> Leave Approvals
                     </a>

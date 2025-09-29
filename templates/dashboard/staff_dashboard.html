@@ -13,15 +13,9 @@
         <!-- Profile Image -->
         <div class="flex-shrink-0 me-4">
           {% if user.profile_image %}
-            <img src="{{ user.profile_image.url }}"
-                alt="Profile Image"
-                class="rounded-circle shadow-sm"
-                style="width: 100px; height: 100px; object-fit: cover;">
+            <img src="{{ user.profile_image.url }}" alt="Profile Image" class="rounded-circle shadow-sm" style="width: 100px; height: 100px; object-fit: cover;">
           {% else %}
-            <img src="{% static 'images/default-avatar.jpg' %}"
-                alt="Default Avatar"
-                class="rounded-circle shadow-sm"
-                style="width: 100px; height: 100px; object-fit: cover;">
+            <img src="{% static 'images/default-avatar.jpg' %}" alt="Default Avatar" class="rounded-circle shadow-sm" style="width: 100px; height: 100px; object-fit: cover;">
           {% endif %}
         </div>
 
@@ -29,20 +23,11 @@
         <div class="flex-grow-1">
           <h5 class="fw-bold mb-1">{{ user.get_full_name|default:user.username }}</h5>
           <p class="text-muted mb-2">{{ user.email }}</p>
-
           <div class="row text-muted small">
-            <div class="col-md-6 mb-1">
-              <i class="bi bi-person-badge me-1"></i> Role: {{ user.role|default:"Staff" }}
-            </div>
-            <div class="col-md-6 mb-1">
-              <i class="bi bi-telephone me-1"></i> Phone: {{ user.profile.phone|default:"N/A" }}
-            </div>
-            <div class="col-md-6">
-              <i class="bi bi-geo-alt me-1"></i> Location: {{ user.profile.location|default:"N/A" }}
-            </div>
-            <div class="col-md-6">
-              <i class="bi bi-calendar-check me-1"></i> Joined: {{ user.date_joined|date:"M d, Y" }}
-            </div>
+            <div class="col-md-6 mb-1"><i class="bi bi-person-badge me-1"></i> Role: {{ user.role|default:"Staff" }}</div>
+            <div class="col-md-6 mb-1"><i class="bi bi-telephone me-1"></i> Phone: {{ user.phone_number|default:"N/A" }}</div>
+            <div class="col-md-6"><i class="bi bi-geo-alt me-1"></i> Location: {{ user.location|default:"N/A" }}</div>
+            <div class="col-md-6"><i class="bi bi-calendar-check me-1"></i> Joined: {{ user.date_joined|date:"M d, Y" }}</div>
           </div>
         </div>
       </div>
@@ -108,43 +93,102 @@
     </div>
   </div>
 
-  <!-- Recent Activity -->
-  <div class="card shadow-sm rounded-4 border-0 mt-5">
-    <div class="card-body">
-      <h5 class="fw-bold mb-3">Recent Attendance</h5>
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for record in recent_attendance %}
-            <tr>
-              <td>{{ record.date }}</td>
-              <td>
-                {% if record.status == "present" %}
-                  <span class="badge bg-success">Present</span>
-                {% elif record.status == "late" %}
-                  <span class="badge bg-warning text-dark">Late</span>
-                {% elif record.status == "absent" %}
-                  <span class="badge bg-danger">Absent</span>
-                {% else %}
-                  <span class="badge bg-secondary">Not Marked</span>
-                {% endif %}
-              </td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="2" class="text-center text-muted py-4">No recent records</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+ <!-- Attendance Trend Chart -->
+<div class="card shadow-sm rounded-4 border-0 mt-5 p-4">
+  <h5 class="fw-bold mb-3">Attendance Trend (Last 7 Days)</h5>
+  <canvas id="attendanceTrendChart" height="300"></canvas>
 </div>
+
+<!-- Leave Summary Chart -->
+<div class="card shadow-sm rounded-4 border-0 mt-4 p-4">
+  <h5 class="fw-bold mb-3">Leave Requests Status</h5>
+  <canvas id="leaveChart" height="300"></canvas>
+</div>
+
+ 
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Attendance Trend Chart
+  const ctxAttendance = document.getElementById('attendanceTrendChart').getContext('2d');
+
+  const attendanceLabels = {{ trend_labels|default:"['Mon','Tue','Wed','Thu','Fri','Sat','Sun']"|safe }};
+  const attendancePresent = {{ trend_present|default:"[0,0,0,0,0,0,0]"|safe }};
+  const attendanceAbsent = {{ trend_absent|default:"[0,0,0,0,0,0,0]"|safe }};
+  const attendanceLate = {{ trend_late|default:"[0,0,0,0,0,0,0]"|safe }};
+
+  const attendanceTrendChart = new Chart(ctxAttendance, {
+    type: 'line',
+    data: {
+      labels: attendanceLabels,
+      datasets: [
+        {
+          label: 'Present',
+          data: attendancePresent,
+          fill: false,
+          borderColor: 'rgba(25, 135, 84, 1)',
+          tension: 0.3
+        },
+        {
+          label: 'Absent',
+          data: attendanceAbsent,
+          fill: false,
+          borderColor: 'rgba(220,53,69,1)',
+          tension: 0.3
+        },
+        {
+          label: 'Late',
+          data: attendanceLate,
+          fill: false,
+          borderColor: 'rgba(255,193,7,1)',
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        x: { title: { display: true, text: 'Day' }, grid: { drawTicks: true, color: '#e9ecef' } },
+        y: { beginAtZero: true, precision: 0, title: { display: true, text: 'Count' }, grid: { drawTicks: true, color: '#e9ecef' } }
+      }
+    }
+  });
+
+  // Leave Requests Chart
+  const ctxLeave = document.getElementById('leaveChart').getContext('2d');
+
+  const leaveLabels = ['Approved', 'Pending', 'Rejected'];
+  const leaveData = [
+    {{ approved_leaves|default:"0" }},
+    {{ pending_leaves|default:"0" }},
+    {{ rejected_leaves|default:"0" }}
+  ];
+
+  const leaveChart = new Chart(ctxLeave, {
+    type: 'bar',
+    data: {
+      labels: leaveLabels,
+      datasets: [{
+        label: 'Leaves',
+        data: leaveData,
+        backgroundColor: [
+          'rgba(25, 135, 84, 0.7)',
+          'rgba(255,193,7,0.7)',
+          'rgba(220,53,69,0.7)'
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { drawTicks: true, color: '#e9ecef' } },
+        y: { beginAtZero: true, precision: 0, grid: { drawTicks: true, color: '#e9ecef' } }
+      }
+    }
+  });
+</script>
+
 {% endblock %}

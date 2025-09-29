@@ -136,7 +136,9 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Status Distribution
+document.addEventListener("DOMContentLoaded", () => {
+
+    // --- Status Distribution Pie Chart ---
     const statusCtx = document.getElementById('statusChart');
     new Chart(statusCtx, {
         type: 'pie',
@@ -148,43 +150,73 @@
             }]
         },
         options: {
-            maintainAspectRatio: false
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
         }
     });
 
-    // Daily Trends
+    // --- Daily Attendance Trends Line Chart ---
     const trendCtx = document.getElementById('trendChart');
     new Chart(trendCtx, {
         type: 'line',
         data: {
-            labels: {{ trend_labels|safe }},
+            labels: {{ trend_labels|safe }}, // ["2025-09-01", "2025-09-02", ...]
             datasets: [
                 {
                     label: 'Present',
                     data: {{ trend_present|safe }},
                     borderColor: '#28a745',
-                    fill: false,
-                    tension: 0.1
+                    backgroundColor: 'rgba(40,167,69,0.2)',
+                    fill: true,
+                    tension: 0.1,
+                    pointRadius: 4
                 },
                 {
                     label: 'Absent',
                     data: {{ trend_absent|safe }},
                     borderColor: '#dc3545',
-                    fill: false,
-                    tension: 0.1
+                    backgroundColor: 'rgba(220,53,69,0.2)',
+                    fill: true,
+                    tension: 0.1,
+                    pointRadius: 4
                 },
                 {
                     label: 'Late',
                     data: {{ trend_late|safe }},
                     borderColor: '#ffc107',
-                    fill: false,
-                    tension: 0.1
+                    backgroundColor: 'rgba(255,193,7,0.2)',
+                    fill: true,
+                    tension: 0.1,
+                    pointRadius: 4
                 }
             ]
         },
         options: {
-            maintainAspectRatio: false
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: { mode: 'index', intersect: false }
+            },
+            interaction: { mode: 'nearest', axis: 'x', intersect: false },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Date' },
+                    ticks: { autoSkip: true, maxRotation: 45, minRotation: 0 }
+                },
+                y: {
+                    title: { display: true, text: 'Count' },
+                    beginAtZero: true,
+                    precision: 0
+                }
+            }
         }
     });
+
+});
 </script>
+
 {% endblock %}

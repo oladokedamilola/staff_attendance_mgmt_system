@@ -14,66 +14,31 @@
           <form method="post" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
 
-            <!-- PROFILE IMAGE PREVIEW / CLICKABLE -->
+            <!-- PROFILE IMAGE -->
             <div class="text-center mb-4">
-              {# If user has an uploaded image show it, otherwise show initials badge #}
-              {% if user.profile_image %}
-                <img id="profilePreview"
-                     src="{{ user.profile_image.url }}"
-                     alt="Profile image"
-                     class="rounded-circle border shadow-sm"
-                     style="width:120px;height:120px;object-fit:cover;cursor:pointer;"
-                     title="Click to change image"
-                     onclick="openFilePicker()">
-                <div id="initialsContainer" style="display:none;"></div>
-              {% else %}
-                <div id="initialsContainer"
-                     class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center shadow-sm"
-                     style="width:120px;height:120px;font-size:32px;cursor:pointer;"
-                     title="Click to add image"
-                     onclick="openFilePicker()">
-                  {# compute initials: prefer first_name + last_name, else first two chars of username #}
-                  {% with fn=user.first_name|default_if_none:"" ln=user.last_name|default_if_none:"" %}
-                    {% if fn or ln %}
-                      {{ fn|slice:":1"|upper }}{% if ln %}{{ ln|slice:":1"|upper }}{% endif %}
-                    {% else %}
-                      {{ user.username|slice:":2"|upper }}
-                    {% endif %}
-                  {% endwith %}
-                </div>
-                <img id="profilePreview"
-                     src="{% static 'img/default-avatar.png' %}"
-                     alt="Profile image"
-                     class="rounded-circle border shadow-sm"
-                     style="width:120px;height:120px;object-fit:cover;cursor:pointer;display:none;"
-                     onclick="openFilePicker()">
-              {% endif %}
+              <img id="profilePreview"
+                   src="{% if user.profile_image %}{{ user.profile_image.url }}{% else %}{% static 'images/default-avatar.jpg' %}{% endif %}"
+                   alt="Profile Image"
+                   class="rounded-circle shadow-sm"
+                   style="width:120px;height:120px;object-fit:cover;cursor:pointer;"
+                   onclick="document.getElementById('id_profile_image').click();">
+
+              <input type="file" name="profile_image" id="id_profile_image" accept="image/*" style="display:none;" onchange="previewImage(event)">
 
               <div class="mt-2">
-                <button type="button" class="btn btn-outline-primary btn-sm" onclick="openFilePicker()">
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.getElementById('id_profile_image').click();">
                   Change Image
                 </button>
               </div>
+
+              {% if form.profile_image.errors %}
+                <div class="text-danger small mt-2">
+                  {{ form.profile_image.errors|striptags }}
+                </div>
+              {% endif %}
             </div>
 
-            {# -- Hidden custom file input (we will use this instead of default ClearableFileInput) -- #}
-            <input
-              type="file"
-              name="profile_image"
-              id="id_profile_image"
-              accept="image/*"
-              style="display: none;"
-              onchange="previewImage(event)"
-            />
-
-            {# Show any server-side validation errors for profile_image #}
-            {% if form.profile_image.errors %}
-              <div class="text-danger small mb-3">
-                {{ form.profile_image.errors|striptags }}
-              </div>
-            {% endif %}
-
-            <!-- EMAIL (READONLY) -->
+            <!-- EMAIL (readonly) -->
             <div class="mb-3">
               {{ form.email.label_tag }}
               {{ form.email }}
@@ -99,6 +64,34 @@
               {% endif %}
             </div>
 
+            <!-- PHONE NUMBER -->
+            <div class="mb-3">
+              <label for="id_phone_number" class="form-label">Phone Number</label>
+              <input type="text" name="phone_number" id="id_phone_number"
+                     class="form-control"
+                     placeholder="Enter 11-digit phone number"
+                     value="{{ user.phone_number|default_if_none:'' }}">
+              {% if form.phone_number.errors %}
+                <div class="text-danger small">{{ form.phone_number.errors }}</div>
+              {% endif %}
+            </div>
+
+            <!-- LOCATION / COUNTRY -->
+            <div class="mb-3">
+              <label for="id_location" class="form-label">Country</label>
+              <select name="location" id="id_location" class="form-select">
+                <option value="">Select your country</option>
+                {% for country in countries %}
+                  <option value="{{ country.name }}" {% if user.location == country.name %}selected{% endif %}>
+                    {{ country.name }}
+                  </option>
+                {% endfor %}
+              </select>
+              {% if form.location.errors %}
+                <div class="text-danger small">{{ form.location.errors }}</div>
+              {% endif %}
+            </div>
+
             <div class="d-grid">
               <button type="submit" class="btn btn-primary">Save Changes</button>
             </div>
@@ -108,22 +101,24 @@
     </div>
   </div>
 </div>
-
 <!-- Image Preview Modal -->
 <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content rounded-4">
       <div class="modal-header">
         <h5 class="modal-title" id="imagePreviewModalLabel">Preview Profile Image</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <div class="modal-body text-center">
-        <img id="modalPreview" src="" class="img-fluid rounded-circle mb-3" style="max-width:220px;object-fit:cover;" alt="Preview">
+      <div class="modal-body d-flex justify-content-center align-items-center">
+        <div style="width: 220px; height: 220px; overflow: hidden; border-radius: 50%;">
+          <img id="modalPreview" src="" alt="Preview"
+               style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
       </div>
 
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="openFilePicker();">Change</button>
+      <div class="modal-footer justify-content-between">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('id_profile_image').click();">Change</button>
         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Confirm</button>
       </div>
     </div>
@@ -131,29 +126,21 @@
 </div>
 
 <script>
-  // Utility: try to find the file input in several ways (compatible with existing forms)
   function getProfileInput() {
-    return document.getElementById('id_profile_image')
-        || document.querySelector('input[type="file"][name="profile_image"]')
-        || null;
+    return document.getElementById('id_profile_image') || document.querySelector('input[type="file"][name="profile_image"]') || null;
   }
 
   function openFilePicker() {
     const input = getProfileInput();
-    if (!input) {
-      console.warn("Profile image input not found.");
-      return;
-    }
+    if (!input) return;
     input.click();
   }
 
-  // Called when a file is selected
   function previewImage(event) {
     const input = event.target;
     const file = input.files && input.files[0];
     if (!file) return;
 
-    // Only handle image mime types
     if (!file.type.startsWith('image/')) {
       alert('Please select a valid image file.');
       input.value = '';
@@ -162,7 +149,6 @@
 
     const reader = new FileReader();
     reader.onload = function(e) {
-      // Update small on-page preview
       const onPageImg = document.getElementById('profilePreview');
       const initialsContainer = document.getElementById('initialsContainer');
 
@@ -174,11 +160,9 @@
         initialsContainer.style.display = 'none';
       }
 
-      // Update modal preview and open modal
       const modalPreview = document.getElementById('modalPreview');
-      if (modalPreview) {
-        modalPreview.src = e.target.result;
-      }
+      if (modalPreview) modalPreview.src = e.target.result;
+
       const modalEl = document.getElementById('imagePreviewModal');
       const bsModal = new bootstrap.Modal(modalEl);
       bsModal.show();
@@ -186,13 +170,11 @@
     reader.readAsDataURL(file);
   }
 
-  // On page load ensure correct visibility of preview vs initials
   document.addEventListener('DOMContentLoaded', function() {
     const onPageImg = document.getElementById('profilePreview');
     const initialsContainer = document.getElementById('initialsContainer');
 
     if (onPageImg) {
-      // if image has a default src pointing to default avatar, hide it in favor of initials container
       const src = onPageImg.getAttribute('src') || '';
       const isDefault = src.indexOf('default-avatar') !== -1 || src.trim() === '';
       if (isDefault) {

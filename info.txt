@@ -8,11 +8,12 @@ python manage.py makemigrations accounts adminpanel attendance core leave staff
 
 python manage.py migrate
 
-python manage.py createadmin
+python manage.py createadmin 
+    email: (eg: admin@demo.com)
 
 python manage.py runserver
 
-
+Then visit this link: http://127.0.0.1:8000/
 
 
 

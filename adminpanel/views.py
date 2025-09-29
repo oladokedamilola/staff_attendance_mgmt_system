@@ -11,7 +11,7 @@ from leave.models import Leave
 from .forms import StaffInvitationForm, StaffForm
 
 from uuid import uuid4
-from django.core.mail import send_mail, EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 
 from .forms import StaffInvitationForm
@@ -81,46 +81,59 @@ def send_staff_invite(request):
     return render(request, "adminpanel/send_invite.html", context)
 
 
-
-from django.db.models import Count
 from datetime import timedelta, date
+from django.db.models import Count, Q
 
 @login_required
 def admin_dashboard(request):
-    """Admin dashboard with stats overview."""
+    """Admin dashboard with stats overview and attendance trends by percentage."""
     if not request.user.is_admin_user():
         messages.error(request, "You do not have access to the admin dashboard.")
         return redirect("home")
 
     today = date.today()
+    total_staff = User.objects.filter(role="staff").count()
     today_attendance = Attendance.objects.filter(date=today)
 
-    # Last 7 days attendance % (present / total * 100)
-    last_7_days = [today - timedelta(days=i) for i in range(6, -1, -1)]
-    chart_labels = [d.strftime("%b %d") for d in last_7_days]
-    chart_data = []
-    for d in last_7_days:
+    # --- Attendance Chart Range ---
+    range_option = request.GET.get("range", "7")  # default 7 days
+    try:
+        range_days = int(range_option)
+    except ValueError:
+        range_days = 7
+
+    start_date = today - timedelta(days=range_days - 1)
+    date_list = [start_date + timedelta(days=i) for i in range(range_days)]
+    chart_labels = [d.strftime("%b %d") for d in date_list]
+
+    trend_present = []
+    trend_absent = []
+    trend_late = []
+
+    for d in date_list:
         records = Attendance.objects.filter(date=d)
-        total = records.count()
-        if total > 0:
-            present = records.filter(status="present").count()
-            percent = round((present / total) * 100, 2)
-        else:
-            percent = 0
-        chart_data.append(percent)
+        # Calculate percentage based on total staff
+        trend_present.append(round((records.filter(status="present").count() / total_staff) * 100, 2) if total_staff else 0)
+        trend_absent.append(round((records.filter(status="absent").count() / total_staff) * 100, 2) if total_staff else 0)
+        trend_late.append(round((records.filter(status="late").count() / total_staff) * 100, 2) if total_staff else 0)
+
+    # Recent leaves
+    recent_leaves = Leave.objects.order_by("-applied_at")[:5]
 
     context = {
-        "total_staff": User.objects.filter(role="staff").count(),
+        "total_staff": total_staff,
         "present_today": today_attendance.filter(status="present").count(),
         "absent_today": today_attendance.filter(status="absent").count(),
         "late_today": today_attendance.filter(status="late").count(),
         "pending_leaves": Leave.objects.filter(status="pending").count(),
-        "recent_leaves": Leave.objects.order_by("-applied_at")[:5],
+        "recent_leaves": recent_leaves,
         "chart_labels": chart_labels,
-        "chart_data": chart_data,
+        "trend_present": trend_present,
+        "trend_absent": trend_absent,
+        "trend_late": trend_late,
+        "selected_range": range_days,
     }
     return render(request, "dashboard/admin_dashboard.html", context)
-
 
 
 @login_required
@@ -158,16 +171,36 @@ def edit_staff(request, staff_id):
     return render(request, "adminpanel/edit_staff.html", {"form": form})
 
 from leave.utils import send_leave_notification
+from django.core.paginator import Paginator
 
 @login_required
 def leave_requests(request):
-    """Approve or reject leave requests and notify staff."""
+    """
+    Admin view to manage leave requests:
+    - Display pending and approved leaves
+    - Approve/reject leaves
+    - Send notifications
+    - Paginate both tables (5 per page)
+    """
     if not request.user.is_admin_user():
         messages.error(request, "You do not have access to leave requests.")
         return redirect("home")
 
-    pending_leaves = Leave.objects.filter(status="pending").order_by("-applied_at")
+    # Querysets
+    pending_leaves_qs = Leave.objects.filter(status="pending").order_by("-applied_at")
+    approved_leaves_qs = Leave.objects.filter(status="approved").order_by("-applied_at")
 
+    # Pagination: 5 per page
+    pending_paginator = Paginator(pending_leaves_qs, 5)
+    approved_paginator = Paginator(approved_leaves_qs, 5)
+
+    pending_page_number = request.GET.get("pending_page")
+    approved_page_number = request.GET.get("approved_page")
+
+    pending_leaves = pending_paginator.get_page(pending_page_number)
+    approved_leaves = approved_paginator.get_page(approved_page_number)
+
+    # Handle POST for approve/reject
     if request.method == "POST":
         leave_id = request.POST.get("leave_id")
         action = request.POST.get("action")
@@ -179,7 +212,7 @@ def leave_requests(request):
                 leave.save()
                 messages.success(request, f"Leave request for {leave.staff.get_full_name()} approved.")
 
-                # Notify the staff
+                # Notify staff
                 send_leave_notification(
                     sender=request.user,
                     recipient=leave.staff,
@@ -196,7 +229,7 @@ def leave_requests(request):
                 leave.save()
                 messages.info(request, f"Leave request for {leave.staff.get_full_name()} rejected.")
 
-                # Notify the staff
+                # Notify staff
                 send_leave_notification(
                     sender=request.user,
                     recipient=leave.staff,
@@ -210,15 +243,20 @@ def leave_requests(request):
             else:
                 messages.error(request, "Invalid action provided for leave request.")
 
-        except Exception as e:
+        except Exception:
             messages.warning(
                 request,
-                f"Leave status updated, but failed to send notification. Error logged."
+                "Leave status updated, but failed to send notification. Error logged."
             )
 
         return redirect("leave_requests")
 
-    if not pending_leaves.exists():
+    # Inform admin if no pending requests
+    if not pending_leaves_qs.exists():
         messages.info(request, "No pending leave requests at the moment.")
 
-    return render(request, "adminpanel/leave_requests.html", {"pending_leaves": pending_leaves})
+    context = {
+        "pending_leaves": pending_leaves,
+        "approved_leaves": approved_leaves,
+    }
+    return render(request, "adminpanel/leave_requests.html", context)

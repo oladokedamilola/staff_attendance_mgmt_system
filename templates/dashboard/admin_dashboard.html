@@ -10,19 +10,14 @@
   <div class="d-flex justify-content-center mb-5">
     <div class="card shadow-sm rounded-4 border-0" style="max-width: 700px; width: 100%;">
       <div class="card-body d-flex align-items-center">
-        
         <!-- Profile Image -->
         <div class="flex-shrink-0 me-4">
           {% if user.profile_image %}
-            <img src="{{ user.profile_image.url }}"
-                alt="Profile Image"
-                class="rounded-circle shadow-sm"
-                style="width: 100px; height: 100px; object-fit: cover;">
+            <img src="{{ user.profile_image.url }}" alt="Profile Image"
+                 class="rounded-circle shadow-sm" style="width: 100px; height: 100px; object-fit: cover;">
           {% else %}
-            <img src="{% static 'images/default-avatar.jpg' %}"
-                alt="Default Avatar"
-                class="rounded-circle shadow-sm"
-                style="width: 100px; height: 100px; object-fit: cover;">
+            <img src="{% static 'images/default-avatar.jpg' %}" alt="Default Avatar"
+                 class="rounded-circle shadow-sm" style="width: 100px; height: 100px; object-fit: cover;">
           {% endif %}
         </div>
 
@@ -30,76 +25,63 @@
         <div class="flex-grow-1">
           <h5 class="fw-bold mb-1">{{ user.get_full_name|default:user.first_name }}</h5>
           <p class="text-muted mb-2">{{ user.email }}</p>
-
           <div class="row text-muted small">
-            <div class="col-md-6 mb-1">
-              <i class="bi bi-person-badge me-1"></i> Role: {{ user.role|default:"Staff" }}
-            </div>
-            <div class="col-md-6 mb-1">
-              <i class="bi bi-telephone me-1"></i> Phone: {{ user.profile.phone|default:"N/A" }}
-            </div>
-            <div class="col-md-6">
-              <i class="bi bi-geo-alt me-1"></i> Location: {{ user.profile.location|default:"N/A" }}
-            </div>
-            <div class="col-md-6">
-              <i class="bi bi-calendar-check me-1"></i> Joined: {{ user.date_joined|date:"M d, Y" }}
-            </div>
+            <div class="col-md-6 mb-1"><i class="bi bi-person-badge me-1"></i> Role: {{ user.role|default:"Staff" }}</div>
+            <div class="col-md-6 mb-1"><i class="bi bi-telephone me-1"></i> Phone: {{ user.phone_number|default:"N/A" }}</div>
+            <div class="col-md-6"><i class="bi bi-geo-alt me-1"></i> Location: {{ user.location|default:"N/A" }}</div>
+            <div class="col-md-6"><i class="bi bi-calendar-check me-1"></i> Joined: {{ user.date_joined|date:"M d, Y" }}</div>
           </div>
         </div>
       </div>
     </div>
   </div>
 
- <!-- Summary Cards -->
-<div class="d-flex justify-content-center flex-wrap gap-3 mb-4">
-  <div class="card shadow-sm rounded-4 border-0" style="min-width: 180px;">
-    <div class="card-body text-center">
-      <div class="text-muted"><i class="bi bi-people fs-3"></i></div>
-      <h6 class="card-title text-muted mt-2">Total Staff</h6>
-      <h4 class="fw-bold text-success">{{ total_staff }}</h4>
+  <!-- Summary Cards -->
+  <div class="d-flex justify-content-center flex-wrap gap-3 mb-4">
+    <div class="card shadow-sm rounded-4 border-0" style="min-width: 180px;">
+      <div class="card-body text-center">
+        <div class="text-muted"><i class="bi bi-people fs-3"></i></div>
+        <h6 class="card-title text-muted mt-2">Total Staff</h6>
+        <h4 class="fw-bold text-success">{{ total_staff }}</h4>
+      </div>
+    </div>
+    <div class="card shadow-sm rounded-4 border-0" style="min-width: 180px;">
+      <div class="card-body text-center">
+        <div class="text-muted"><i class="bi bi-person-check fs-3"></i></div>
+        <h6 class="card-title text-muted mt-2">Present Today</h6>
+        <h4 class="fw-bold text-primary">{{ present_today }}</h4>
+      </div>
+    </div>
+    <div class="card shadow-sm rounded-4 border-0" style="min-width: 180px;">
+      <div class="card-body text-center">
+        <div class="text-muted"><i class="bi bi-person-x fs-3"></i></div>
+        <h6 class="card-title text-muted mt-2">Absent Today</h6>
+        <h4 class="fw-bold text-danger">{{ absent_today }}</h4>
+      </div>
+    </div>
+    <div class="card shadow-sm rounded-4 border-0" style="min-width: 180px;">
+      <div class="card-body text-center">
+        <div class="text-muted"><i class="bi bi-alarm fs-3"></i></div>
+        <h6 class="card-title text-muted mt-2">Late Today</h6>
+        <h4 class="fw-bold text-warning">{{ late_today }}</h4>
+      </div>
+    </div>
+    <div class="card shadow-sm rounded-4 border-0" style="min-width: 180px;">
+      <div class="card-body text-center">
+        <div class="text-muted"><i class="bi bi-hourglass-split fs-3"></i></div>
+        <h6 class="card-title text-muted mt-2">Pending Leaves</h6>
+        <h4 class="fw-bold text-info">{{ pending_leaves }}</h4>
+      </div>
     </div>
   </div>
-
-  <div class="card shadow-sm rounded-4 border-0" style="min-width: 180px;">
-    <div class="card-body text-center">
-      <div class="text-muted"><i class="bi bi-person-check fs-3"></i></div>
-      <h6 class="card-title text-muted mt-2">Present Today</h6>
-      <h4 class="fw-bold text-primary">{{ present_today }}</h4>
-    </div>
-  </div>
-
-  <div class="card shadow-sm rounded-4 border-0" style="min-width: 180px;">
-    <div class="card-body text-center">
-      <div class="text-muted"><i class="bi bi-person-x fs-3"></i></div>
-      <h6 class="card-title text-muted mt-2">Absent Today</h6>
-      <h4 class="fw-bold text-danger">{{ absent_today }}</h4>
-    </div>
-  </div>
-
-  <div class="card shadow-sm rounded-4 border-0" style="min-width: 180px;">
-    <div class="card-body text-center">
-      <div class="text-muted"><i class="bi bi-alarm fs-3"></i></div>
-      <h6 class="card-title text-muted mt-2">Late Today</h6>
-      <h4 class="fw-bold text-warning">{{ late_today }}</h4>
-    </div>
-  </div>
-
-  <div class="card shadow-sm rounded-4 border-0" style="min-width: 180px;">
-    <div class="card-body text-center">
-      <div class="text-muted"><i class="bi bi-hourglass-split fs-3"></i></div>
-      <h6 class="card-title text-muted mt-2">Pending Leaves</h6>
-      <h4 class="fw-bold text-info">{{ pending_leaves }}</h4>
-    </div>
-  </div>
-</div>
-
 
   <!-- Quick Actions -->
   <div class="row g-4 mt-4">
     <div class="col-md-3">
-      <a href="{% url 'send_staff_invite' %}" class="btn btn-primary w-100 py-3 rounded-4 shadow-sm">
+      <button type="button" class="btn btn-primary w-100 py-3 rounded-4 shadow-sm" 
+              data-bs-toggle="modal" data-bs-target="#inviteStaffModal">
         <i class="bi bi-person-plus me-2"></i> Invite Staff
-      </a>
+      </button>
     </div>
     <div class="col-md-3">
       <a href="{% url 'leave_requests' %}" class="btn btn-success w-100 py-3 rounded-4 shadow-sm">
@@ -118,10 +100,23 @@
     </div>
   </div>
 
-  <!-- Attendance Overview -->
+  <!-- Attendance Overview with Filter -->
   <div class="card shadow-sm rounded-4 border-0 mt-5">
     <div class="card-body">
-      <h5 class="fw-bold mb-3">Attendance Overview (Last 7 Days)</h5>
+      <h5 class="fw-bold mb-3">Attendance Overview</h5>
+
+      <!-- Filter Form -->
+      <form method="get" class="mb-3 d-flex align-items-center gap-2">
+        <label for="range" class="mb-0">Show:</label>
+        <select name="range" id="range" class="form-select w-auto" onchange="this.form.submit()">
+          <option value="7" {% if selected_range == 7 %}selected{% endif %}>Last 7 Days</option>
+          <option value="14" {% if selected_range == 14 %}selected{% endif %}>Last 2 Weeks</option>
+          <option value="21" {% if selected_range == 21 %}selected{% endif %}>Last 3 Weeks</option>
+          <option value="30" {% if selected_range == 30 %}selected{% endif %}>Last 1 Month</option>
+          <option value="90" {% if selected_range == 90 %}selected{% endif %}>Last 3 Months</option>
+        </select>
+      </form>
+
       <div class="chart-container" style="height: 300px;">
         <canvas id="attendanceChart"></canvas>
       </div>
@@ -160,13 +155,43 @@
             </tr>
             {% empty %}
             <tr>
-              <td colspan="4" class="text-center text-muted py-4">
-                No recent leave requests
-              </td>
+              <td colspan="4" class="text-center text-muted py-4">No recent leave requests</td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Invite Staff Modal -->
+<div class="modal fade" id="inviteStaffModal" tabindex="-1" aria-labelledby="inviteStaffModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 shadow-lg">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title" id="inviteStaffModalLabel">Invite New Staff</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="post" action="{% url 'send_staff_invite' %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="staffEmail" class="form-label">Staff Email</label>
+            <input type="email" class="form-control" id="staffEmail" name="email" placeholder="Enter staff email" required>
+          </div>
+          <div class="mb-3">
+            <label for="staffRole" class="form-label">Role</label>
+            <select class="form-select" id="staffRole" name="role" required>
+              <option value="">Select role</option>
+              <option value="staff">Staff</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary">Send Invite</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -177,24 +202,64 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const ctx = document.getElementById("attendanceChart").getContext("2d");
+
   new Chart(ctx, {
     type: "line",
     data: {
       labels: {{ chart_labels|safe }},
-      datasets: [{
-        label: "Attendance % (Present)",
-        data: {{ chart_data|safe }},
-        borderColor: "#28a745",
-        backgroundColor: "rgba(40, 167, 69, 0.2)",
-        fill: true,
-        tension: 0.3
-      }]
+      datasets: [
+        {
+          label: "Present (%)",
+          data: {{ trend_present|safe }},
+          borderColor: "#28a745",
+          backgroundColor: "rgba(40,167,69,0.2)",
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4
+        },
+        {
+          label: "Absent (%)",
+          data: {{ trend_absent|safe }},
+          borderColor: "#dc3545",
+          backgroundColor: "rgba(220,53,69,0.2)",
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4
+        },
+        {
+          label: "Late (%)",
+          data: {{ trend_late|safe }},
+          borderColor: "#ffc107",
+          backgroundColor: "rgba(255,193,7,0.2)",
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4
+        }
+      ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: true } },
-      scales: { y: { min: 0, max: 100 } }
+      plugins: {
+        legend: { position: "bottom" },
+        tooltip: {
+          mode: "index",
+          intersect: false,
+          callbacks: {
+            label: function(context) { return context.dataset.label + ": " + context.raw + "%"; }
+          }
+        }
+      },
+      interaction: { mode: "nearest", axis: "x", intersect: false },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          title: { display: true, text: "Percentage of Total Staff" },
+          ticks: { callback: function(value){ return value + "%"; } }
+        },
+        x: { title: { display: true, text: "Date" } }
+      }
     }
   });
 });

@@ -70,9 +70,15 @@ from io import BytesIO
 from django.db.models import Count
 from django.db.models.functions import TruncDate
 
+from django.db.models import Count
+from django.db.models.functions import TruncDate
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from leave.models import Leave
+import json
+
 @login_required
 def leave_report(request):
-    """Admins can view leave reports with filters and trend chart."""
     if not request.user.is_admin_user():
         messages.error(request, "Access denied. Admin privileges required.")
         return redirect("login")
@@ -97,13 +103,13 @@ def leave_report(request):
     if not leaves.exists():
         messages.warning(request, "No leave records found to display.")
 
-    # Aggregate daily leave counts for the trend chart
+    # Aggregate daily leave counts
     trend_data = leaves.annotate(date_only=TruncDate('applied_at')) \
                        .values('date_only', 'status') \
                        .annotate(count=Count('id')) \
                        .order_by('date_only')
 
-    # Prepare chart data
+    # Chart labels
     chart_labels = sorted({td['date_only'].strftime("%Y-%m-%d") for td in trend_data})
 
     # Initialize trends with 0 counts
@@ -115,11 +121,11 @@ def leave_report(request):
     for td in trend_data:
         date_str = td['date_only'].strftime("%Y-%m-%d")
         index = chart_labels.index(date_str)
-        if td['status'] == 'pending':
+        if td['status'].lower() == 'pending':
             pending_trend[index] = td['count']
-        elif td['status'] == 'approved':
+        elif td['status'].lower() == 'approved':
             approved_trend[index] = td['count']
-        elif td['status'] == 'rejected':
+        elif td['status'].lower() == 'rejected':
             rejected_trend[index] = td['count']
 
     # Total counts for badges
@@ -132,11 +138,13 @@ def leave_report(request):
         "pending_count": pending_count,
         "approved_count": approved_count,
         "rejected_count": rejected_count,
-        "chart_labels": chart_labels,
-        "pending_trend": pending_trend,
-        "approved_trend": approved_trend,
-        "rejected_trend": rejected_trend,
+        # Convert to JSON for safe JS consumption
+        "chart_labels": json.dumps(chart_labels),
+        "pending_trend": json.dumps(pending_trend),
+        "approved_trend": json.dumps(approved_trend),
+        "rejected_trend": json.dumps(rejected_trend),
     })
+
 
 
 @login_required

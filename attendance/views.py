@@ -54,7 +54,7 @@ from django.shortcuts import render, redirect
 from .models import Attendance
 from accounts.models import User
 from django.db import models
-
+from datetime import timedelta
 import csv
 import openpyxl
 from openpyxl.utils import get_column_letter
@@ -66,7 +66,6 @@ from django.shortcuts import render, redirect
 from accounts.models import User
 from .models import Attendance
 
-
 @login_required
 def attendance_report(request):
     """Admins can view attendance reports with filtering + charts."""
@@ -74,7 +73,7 @@ def attendance_report(request):
         messages.error(request, "Access denied. Admin privileges required.")
         return redirect("login")
 
-    # Base queryset (default = all staff)
+    # Base queryset
     records = Attendance.objects.all().order_by("staff", "-date")
 
     # Filtering
@@ -83,14 +82,13 @@ def attendance_report(request):
     end_date = request.GET.get("end_date")
 
     if staff_email:
-        records = records.filter(staff__email=staff_email)  # filter by email
+        records = records.filter(staff__email=staff_email)
     if start_date:
         records = records.filter(date__gte=start_date)
     if end_date:
         records = records.filter(date__lte=end_date)
 
-    # --- Charts ---
-    # Status distribution
+    # --- Status distribution ---
     status_counts = {
         "Present": records.filter(status="present").count(),
         "Absent": records.filter(status="absent").count(),
@@ -99,20 +97,44 @@ def attendance_report(request):
     status_labels = list(status_counts.keys())
     status_data = list(status_counts.values())
 
-    # Daily trends
+    # --- Daily Trends ---
+    # Collect all dates in range (if no records exist, generate a small range)
+    if start_date and end_date:
+        date_list = [
+            start_date + timedelta(days=i)
+            for i in range((datetime.strptime(end_date, "%Y-%m-%d") - datetime.strptime(start_date, "%Y-%m-%d")).days + 1)
+        ]
+    else:
+        date_list = sorted({r.date for r in records})  # unique sorted dates from records
+
+    # Create a dict keyed by date for easy lookup
+    trend_dict = {}
+    for d in date_list:
+        trend_dict[str(d)] = {"present": 0, "absent": 0, "late": 0}
+
+    # Fill counts from actual records
     daily_qs = (
         records.values("date")
-        .order_by("date")
         .annotate(
             present=models.Count("id", filter=models.Q(status="present")),
             absent=models.Count("id", filter=models.Q(status="absent")),
             late=models.Count("id", filter=models.Q(status="late")),
         )
     )
-    trend_labels = [str(item["date"]) for item in daily_qs]
-    trend_present = [item["present"] for item in daily_qs]
-    trend_absent = [item["absent"] for item in daily_qs]
-    trend_late = [item["late"] for item in daily_qs]
+
+    for item in daily_qs:
+        date_str = str(item["date"])
+        trend_dict[date_str] = {
+            "present": item["present"],
+            "absent": item["absent"],
+            "late": item["late"],
+        }
+
+    # Prepare final lists for Chart.js
+    trend_labels = list(trend_dict.keys())
+    trend_present = [trend_dict[d]["present"] for d in trend_labels]
+    trend_absent = [trend_dict[d]["absent"] for d in trend_labels]
+    trend_late = [trend_dict[d]["late"] for d in trend_labels]
 
     return render(
         request,
@@ -129,6 +151,7 @@ def attendance_report(request):
             "selected_staff": staff_email,
         },
     )
+
 
 
 @login_required
